@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Productivity Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Productivity Dashboard</h1>
+    <div class="meta">PHP → Golang · Бег · Duolingo · Лем</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <button class="notif-btn" id="notif-btn" onclick="toggleNotifications()">
+      <span id="notif-icon">🔔</span>
+      <span class="notif-label" id="notif-label">уведомления</span>
+    </button>
+    <div id="live-clock">00:00</div>
+  </div>
+</header>
+
+<!-- Цитата из файла -->
+<div id="quote-banner">
+  <div class="quote-icon">💬</div>
+  <div class="quote-body">
+    <div class="quote-text" id="quote-text"></div>
+    <div class="quote-expl" id="quote-expl"></div>
+  </div>
+  <div class="quote-meta">
+    <button class="quote-next-btn" onclick="nextQuote()">следующая →</button>
+    <div class="quote-countdown" id="quote-countdown"></div>
+  </div>
+</div>
+
+<!-- Личные виджеты -->
+<div class="personal-bar">
+  <div class="widget">
+    <div class="widget-icon">🧘</div>
+    <div class="widget-body">
+      <div class="widget-value days-value" id="days-counter">0</div>
+      <div class="widget-label">дней без вредной привычки</div>
+      <div class="widget-sub" id="days-since-label">с 9 марта</div>
+    </div>
+  </div>
+  <div class="widget">
+    <div class="widget-icon">🛡️</div>
+    <div class="widget-body">
+      <div class="widget-value cushion-value" id="cushion-count">7</div>
+      <div class="widget-label">подушек безопасности</div>
+      <div class="widget-sub">финансовый резерв</div>
+    </div>
+    <div class="cushion-controls">
+      <button class="cush-btn" onclick="changeCushions(1)">+</button>
+      <button class="cush-btn" onclick="changeCushions(-1)">−</button>
+    </div>
+  </div>
+</div>
+
+<!-- Слово дня -->
+<section class="wod-section" id="wod-section">
+  <div class="wod-inner">
+
+    <div class="wod-header-label">📚 Слово дня</div>
+
+    <!-- Загрузка -->
+    <div id="wod-loading" class="wod-loading">
+      <div class="wod-spinner"></div>
+      <span>Загрузка...</span>
+    </div>
+
+    <!-- Контент -->
+    <div id="wod-content" class="wod-content" style="display:none">
+      <div class="wod-left">
+        <div class="wod-word-row">
+          <span class="wod-word" id="wod-word"></span>
+          <span class="wod-phonetic" id="wod-phonetic"></span>
+          <span class="wod-pos" id="wod-pos"></span>
+        </div>
+        <div class="wod-def-row">
+          <div class="wod-def-en" id="wod-definition"></div>
+          <div class="wod-def-ru" id="wod-translation"></div>
+        </div>
+        <div class="wod-notice" id="wod-notice"></div>
+      </div>
+      <div class="wod-right" id="wod-example-block">
+        <div class="wod-example-label">Пример</div>
+        <div class="wod-example-en" id="wod-example-en"></div>
+        <div class="wod-example-ru" id="wod-example-ru"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Основная сетка -->
+<div class="grid">
+
+  <!-- Расписание -->
+  <div class="card schedule">
+    <div class="card-title">Ежедневный распорядок</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- TODO -->
+  <div class="card todo-card">
+    <div class="card-title-row">
+      <span class="card-title">TODO сегодня</span>
+      <span class="todo-progress-text">
+        <span class="done-count" id="todo-done-count">0</span> / <span id="todo-total-count">0</span> выполнено
+      </span>
+    </div>
+    <div class="todo-input-row">
+      <input class="todo-input" id="todo-input" type="text" placeholder="Добавить задачу…" maxlength="120" />
+      <button class="todo-add-btn" id="todo-add-btn" title="Добавить (Enter)">+</button>
+    </div>
+    <div class="todo-list" id="todo-list"></div>
+    <div class="todo-footer">
+      <button class="history-toggle-btn" id="history-toggle-btn" onclick="toggleHistory()">
+        <span>📋</span> История
+      </button>
+    </div>
+    <div class="history-panel" id="history-panel">
+      <div class="history-header">
+        <span>Выполненные задачи</span>
+        <button class="history-clear-btn" onclick="clearHistory()">очистить</button>
+      </div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- Принципы -->
+  <div class="card">
+    <div class="card-title">Ключевые принципы</div>
+    <div class="principles">
+      <div class="principle p-red">
+        <div class="principle-icon">🎯</div>
+        <div class="principle-text">
+          <strong>Одна главная задача дня</strong>
+          <span>Выполни её до обеда — всё остальное бонус</span>
+        </div>
+      </div>
+      <div class="principle p-yellow">
+        <div class="principle-icon">⏱</div>
+        <div class="principle-text">
+          <strong>Правило «2-минутного старта»</strong>
+          <span>Просто открой файл и напиши одну строку</span>
+        </div>
+      </div>
+      <div class="principle p-green">
+        <div class="principle-icon">📗</div>
+        <div class="principle-text">
+          <strong>Go через работу</strong>
+          <span>Переписывай рабочие утилиты — не абстрактные туториалы</span>
+        </div>
+      </div>
+      <div class="principle p-blue">
+        <div class="principle-icon">📵</div>
+        <div class="principle-text">
+          <strong>YouTube только 16:00–18:30</strong>
+          <span>Остальное время — блокировщик. Утро — без телефона</span>
+        </div>
+      </div>
+      <div class="principle p-purple">
+        <div class="principle-icon">🏃</div>
+        <div class="principle-text">
+          <strong>Пропуск — норма, не катастрофа</strong>
+          <span>Не добавляй интенсивность резко — это мешает сну</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Нижняя полоса -->
+  <div class="full-width">
+
+    <!-- Go Roadmap -->
+    <div class="card">
+      <div class="card-title">Дорожная карта Golang</div>
+      <div class="stages">
+        <div class="stage">
+          <div class="stage-head">
+            <span class="stage-title">🟦 Этап 1 — Фундамент</span>
+            <span class="stage-weeks">Недели 1–4</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div>
+          <div class="stage-topics">
+            <span class="tag">Синтаксис & типы</span>
+            <span class="tag">Структуры & интерфейсы</span>
+            <span class="tag">Горутины & каналы</span>
+            <span class="tag">Модули & пакеты</span>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-head">
+            <span class="stage-title">🟩 Этап 2 — Бэкенд</span>
+            <span class="stage-weeks">Недели 5–10</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div>
+          <div class="stage-topics">
+            <span class="tag">net/http</span>
+            <span class="tag">database/sql</span>
+            <span class="tag">DDD-пакеты</span>
+            <span class="tag">testing</span>
+            <span class="tag">Middleware & DI</span>
+          </div>
+        </div>
+        <div class="stage">
+          <div class="stage-head">
+            <span class="stage-title">🟨 Этап 3 — Переход</span>
+            <span class="stage-weeks">Недели 11–16</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--yellow)"></div></div>
+          <div class="stage-topics">
+            <span class="tag">Микросервис</span>
+            <span class="tag">CI/CD</span>
+            <span class="tag">Gin / Echo / Chi</span>
+            <span class="tag">DDD в Go</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" style="color:var(--blue)" id="stat-go">0</div>
+        <div class="stat-label">Go скриптов / 30</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:var(--red)" id="stat-tasks">0</div>
+        <div class="stat-label">Рабочих задач / 10</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:var(--green)" id="stat-duo">0</div>
+        <div class="stat-label">Duolingo пропусков / 2 макс</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" style="color:var(--purple)" id="stat-journal">0</div>
+        <div class="stat-label">Дней трекинга / 20</div>
+      </div>
+    </div>
+
+    <!-- 30-day goals -->
+    <div class="card">
+      <div class="card-title">Цели на первые 30 дней</div>
+      <div class="goals-list" id="goals"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-ornament">✦</div>
+  <blockquote class="footer-quote">Заблудшие души не ищут учителей. Они ищут людей, рядом с которыми им легче быть лучше</blockquote>
+  <div class="footer-ornament">✦</div>
+</footer>
+
+<script src="js/app.js"></script>
+<script src="js/word-of-day.js"></script>
+</body>
+</html>

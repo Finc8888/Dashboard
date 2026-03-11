@@ -1,0 +1,16 @@
+:80 {
+    root * /srv/www
+    file_server
+    encode gzip
+
+    header {
+        Cache-Control "no-cache, no-store, must-revalidate"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}
