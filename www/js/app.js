@@ -125,7 +125,7 @@ const slots = [
   { time: '19:00', end: '20:00', label: '🏃 Бег',                   sub: 'Вечерняя пробежка',                   dot: 'dot-cyan'   },
   { time: '20:00', end: '21:00', label: '📱 Duolingo',              sub: 'Hard mode · не пропускать',            dot: 'dot-purple' },
   { time: '21:00', end: '21:15', label: 'Планирование завтра',      sub: '10–15 минут · 3 выполненных дела',     dot: 'dot-muted'  },
-  { time: '21:15', end: '22:30', label: '📖 Станислав Лем',         sub: 'Бумага или e-ink — не телефон',        dot: 'dot-purple' },
+  { time: '21:15', end: '22:30', label: '📖 Вечернее чтение',        sub: 'По списку · бумага или e-ink',         dot: 'dot-purple' },
   { time: '22:30', end: '23:59', label: '😴 Сон',                   sub: '',                                     dot: 'dot-muted'  },
 ];
 const LEM_SLOT_INDEX = 14;
@@ -339,9 +339,9 @@ function clearHistory() {
 function notifyTaskSummary() {
   const undone = loadTasks().filter(t => !t.done).length;
   if (undone === 0) {
-    sendNotification('📖 Время Лема!', 'Все задачи дня выполнены 🎉 Заслуженный отдых!');
+    sendNotification('📖 Время читать!', 'Все задачи дня выполнены 🎉 Заслуженный отдых!');
   } else {
-    sendNotification('📖 Время Лема!', `Осталось ${undone} невыполненных задач 📋 Перенесутся на завтра.`);
+    sendNotification('📖 Время читать!', `Осталось ${undone} невыполненных задач 📋 Перенесутся на завтра.`);
   }
 }
 
@@ -355,7 +355,7 @@ const goalsData = [
   { id: 'tasks',   icon: '🔴', text: 'Закрыть 10 накопившихся рабочих задач' },
   { id: 'duo',     icon: '📱', text: 'Не пропустить Duolingo более 2 раз' },
   { id: 'blocker', icon: '📵', text: 'Установить блокировщик YouTube/новостей в первый же день' },
-  { id: 'lem',     icon: '📖', text: 'Прочитать одну книгу Лема' },
+  { id: 'lem',     icon: '📖', text: 'Прочитать первые две книги списка (Тед Чан)' },
   { id: 'journal', icon: '📓', text: 'Вести трекинг хотя бы 20 из 30 дней' },
 ];
 
@@ -467,3 +467,117 @@ fetch('/quotes.json')
     updateCountdown();
   })
   .catch(() => {});
+
+// ── Reading List ───────────────────────────────────────────────────────
+const READING_KEY = 'prod_reading_v1';
+
+const BOOKS = [
+  { id: 'chan-1',          num: 1,  title: 'История твоей жизни', author: 'Тед Чан',               type: 'сборник'   },
+  { id: 'chan-2',          num: 2,  title: 'Выдох',               author: 'Тед Чан',               type: 'сборник'   },
+  { id: 'leguin-1',        num: 3,  title: 'Обездоленный',        author: 'Урсула Ле Гуин',        type: 'роман'     },
+  { id: 'leguin-2',        num: 4,  title: 'Левая рука тьмы',     author: 'Урсула Ле Гуин',        type: 'роман'     },
+  { id: 'leguin-3',        num: 5,  title: 'Волшебник Земноморья',author: 'Урсула Ле Гуин',        type: 'трилогия'  },
+  { id: 'lem-1',           num: 6,  title: 'Кибериада',           author: 'Станислав Лем',         type: 'сборник'   },
+  { id: 'lem-2',           num: 7,  title: 'Непобедимый',         author: 'Станислав Лем',         type: 'роман'     },
+  { id: 'hofstadter',      num: 8,  title: 'Гёдель, Эшер, Бах',  author: 'Дуглас Хофштадтер',    type: 'нон-фикшн' },
+  { id: 'csikszentmihalyi',num: 9,  title: 'Поток',               author: 'Михай Чиксентмихайи',  type: 'нон-фикшн' },
+  { id: 'lem-3',           num: 10, title: 'Солярис',             author: 'Станислав Лем',         type: 'роман'     },
+];
+
+function loadReading() {
+  try { return JSON.parse(localStorage.getItem(READING_KEY) || '{}'); } catch { return {}; }
+}
+function saveReading(data) { localStorage.setItem(READING_KEY, JSON.stringify(data)); }
+
+function getBookState(data, id) {
+  return data[id] || { status: 'waiting', page: 0, startedAt: null };
+}
+
+function cycleBookStatus(id) {
+  const data  = loadReading();
+  const state = getBookState(data, id);
+  const order = ['waiting', 'reading', 'done'];
+  const next  = order[(order.indexOf(state.status) + 1) % order.length];
+
+  // only one book "reading" at a time: if switching to reading, demote previous
+  if (next === 'reading') {
+    BOOKS.forEach(b => {
+      if (b.id !== id && getBookState(data, b.id).status === 'reading') {
+        data[b.id] = { ...getBookState(data, b.id), status: 'done' };
+      }
+    });
+  }
+
+  data[id] = {
+    ...state,
+    status: next,
+    startedAt: next === 'reading' && !state.startedAt ? todayStr() : state.startedAt,
+  };
+  saveReading(data);
+  renderReadingList();
+}
+
+function updateBookPage(id, value) {
+  const data  = loadReading();
+  const state = getBookState(data, id);
+  const page  = Math.max(0, parseInt(value, 10) || 0);
+  data[id] = { ...state, page };
+  saveReading(data);
+  // re-render only the page label, not the whole list (avoids losing focus)
+  const label = document.getElementById('book-page-since-' + id);
+  if (label && state.startedAt) label.textContent = `с ${state.startedAt}`;
+}
+
+const STATUS_ICON = { waiting: '⬜', reading: '🔄', done: '✅' };
+
+function renderReadingList() {
+  const data      = loadReading();
+  const doneCount = BOOKS.filter(b => getBookState(data, b.id).status === 'done').length;
+  const pct       = Math.round((doneCount / BOOKS.length) * 100);
+
+  document.getElementById('reading-done-count').textContent = doneCount;
+  document.getElementById('reading-progress-fill').style.width = pct + '%';
+
+  const container = document.getElementById('reading-books');
+  container.innerHTML = '';
+
+  BOOKS.forEach(book => {
+    const state   = getBookState(data, book.id);
+    const { status, page, startedAt } = state;
+
+    const el = document.createElement('div');
+    el.className = 'book-item book-' + status;
+
+    const pageRow = status === 'reading' ? `
+      <div class="book-page-row">
+        <span class="book-page-label">Страница:</span>
+        <input
+          class="book-page-input"
+          id="book-page-input-${book.id}"
+          type="number"
+          min="0"
+          value="${page}"
+          onchange="updateBookPage('${book.id}', this.value)"
+        />
+        <span class="book-page-since" id="book-page-since-${book.id}">${startedAt ? 'с ' + startedAt : ''}</span>
+      </div>` : '';
+
+    el.innerHTML = `
+      <button class="book-status-btn" onclick="cycleBookStatus('${book.id}')" title="Изменить статус">
+        ${STATUS_ICON[status]}
+      </button>
+      <div class="book-body">
+        <div class="book-main-row">
+          <span class="book-num">${book.num}.</span>
+          <span class="book-title">${book.title}</span>
+          <span class="book-type">${book.type}</span>
+        </div>
+        <div class="book-author">${book.author}</div>
+        ${pageRow}
+      </div>`;
+
+    container.appendChild(el);
+  });
+}
+
+renderReadingList();

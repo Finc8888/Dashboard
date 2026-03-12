@@ -13,7 +13,7 @@
 <header>
   <div>
     <h1>Productivity Dashboard</h1>
-    <div class="meta">PHP → Golang · Бег · Duolingo · Лем</div>
+    <div class="meta">PHP → Golang · Бег · Duolingo · Чтение</div>
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
     <button class="notif-btn" id="notif-btn" onclick="toggleNotifications()">
@@ -249,6 +249,20 @@
     <div class="card">
       <div class="card-title">Цели на первые 30 дней</div>
       <div class="goals-list" id="goals"></div>
+    </div>
+
+    <!-- Список чтения -->
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title">📚 Список чтения · 21:15–22:30</span>
+        <span class="reading-summary" id="reading-summary">
+          <span id="reading-done-count">0</span> / 10 книг
+        </span>
+      </div>
+      <div class="reading-progress-bar">
+        <div class="reading-progress-fill" id="reading-progress-fill"></div>
+      </div>
+      <div class="reading-books" id="reading-books"></div>
     </div>
 
   </div>
