@@ -52,6 +52,94 @@ function changeCushions(delta) {
 }
 renderCushions();
 
+// ── Mortgage ───────────────────────────────────────────────────────────────
+const MORTGAGE_KEY = 'prod_mortgage_v1';
+
+function loadMortgage() {
+  try { return JSON.parse(localStorage.getItem(MORTGAGE_KEY) || '{}'); } catch { return {}; }
+}
+function saveMortgageData(d) { localStorage.setItem(MORTGAGE_KEY, JSON.stringify(d)); }
+
+function fmtRub(n) {
+  const num = parseFloat(n) || 0;
+  const hasKopecks = num % 1 !== 0;
+  return num.toLocaleString('ru-RU', {
+    minimumFractionDigits: hasKopecks ? 2 : 0,
+    maximumFractionDigits: 2,
+  }) + ' ₽';
+}
+function fmtMortDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function renderMortgage() {
+  const d = loadMortgage();
+  document.getElementById('mort-payment').textContent = fmtRub(d.payment || 0);
+  document.getElementById('mort-debt').textContent    = fmtRub(d.debt    || 0);
+
+  const rateEl = document.getElementById('mort-rate');
+  rateEl.textContent = (d.rate || 0) + '%';
+
+  const datesEl = document.getElementById('mort-dates');
+  const start = fmtMortDate(d.startDate);
+  const end   = fmtMortDate(d.endDate);
+  if (d.startDate || d.endDate) {
+    datesEl.textContent = start + ' → ' + end;
+  } else {
+    datesEl.textContent = '—';
+  }
+
+  const paydayEl = document.getElementById('mort-payday');
+  paydayEl.textContent = d.payDay ? d.payDay + '-го числа' : '—';
+}
+
+function toggleMortgageEdit() {
+  const panel  = document.getElementById('mortgage-edit-panel');
+  const body   = document.getElementById('mortgage-display');
+  const btn    = document.getElementById('mortgage-edit-btn');
+  const isOpen = panel.style.display !== 'none';
+  if (isOpen) {
+    panel.style.display = 'none';
+    body.style.display  = '';
+    btn.classList.remove('active');
+  } else {
+    const d = loadMortgage();
+    document.getElementById('mort-input-payment').value  = d.payment  || '';
+    document.getElementById('mort-input-debt').value     = d.debt     || '';
+    document.getElementById('mort-input-rate').value     = d.rate     || '';
+    document.getElementById('mort-input-start').value    = d.startDate || '';
+    document.getElementById('mort-input-end').value      = d.endDate   || '';
+    document.getElementById('mort-input-payday').value   = d.payDay   || '';
+    panel.style.display = '';
+    body.style.display  = 'none';
+    btn.classList.add('active');
+  }
+}
+
+function closeMortgageEdit() {
+  document.getElementById('mortgage-edit-panel').style.display = 'none';
+  document.getElementById('mortgage-display').style.display    = '';
+  document.getElementById('mortgage-edit-btn').classList.remove('active');
+}
+
+function saveMortgage() {
+  const d = {
+    payment:   parseFloat(document.getElementById('mort-input-payment').value) || 0,
+    debt:      parseFloat(document.getElementById('mort-input-debt').value)    || 0,
+    rate:      parseFloat(document.getElementById('mort-input-rate').value)  || 0,
+    startDate: document.getElementById('mort-input-start').value  || '',
+    endDate:   document.getElementById('mort-input-end').value    || '',
+    payDay:    parseInt(document.getElementById('mort-input-payday').value,  10) || 0,
+  };
+  saveMortgageData(d);
+  closeMortgageEdit();
+  renderMortgage();
+}
+
+renderMortgage();
+
 // ── Clock ─────────────────────────────────────────────────────────────────
 function updateClock() {
   document.getElementById('live-clock').textContent =
@@ -203,6 +291,8 @@ renderTimeline();
 setInterval(renderTimeline, 30000);
 
 // ── TODO List ─────────────────────────────────────────────────────────────
+let dragSrcId = null;
+
 const TASKS_KEY   = 'prod_tasks_v1';
 const HISTORY_KEY = 'prod_history_v1';
 
@@ -213,7 +303,7 @@ function saveHistory(h) { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); 
 
 function addTask(text) {
   const tasks = loadTasks();
-  tasks.push({ id: uid(), text: text.trim(), addedAt: new Date().toISOString(), addedDate: todayStr(), done: false, doneAt: null });
+  tasks.push({ id: uid(), text: text.trim(), addedAt: new Date().toISOString(), addedDate: todayStr(), done: false, doneAt: null, current: false });
   saveTasks(tasks);
   renderTodo();
 }
@@ -251,6 +341,53 @@ function deleteTask(id) {
   renderTodo();
 }
 
+function setCurrentTask(id) {
+  const tasks = loadTasks();
+  const clickedTask = tasks.find(t => t.id === id);
+  const isCurrentlyActive = clickedTask && clickedTask.current;
+  tasks.forEach(t => { t.current = false; });
+  if (!isCurrentlyActive) {
+    const t = tasks.find(t => t.id === id);
+    if (t) t.current = true;
+  }
+  saveTasks(tasks);
+  renderTodo();
+}
+
+function startRenameTask(id) {
+  const itemEl = document.querySelector(`.todo-item[data-task-id="${id}"]`);
+  if (!itemEl) return;
+  const textEl = itemEl.querySelector('.todo-text');
+  if (!textEl) return;
+  const task = loadTasks().find(t => t.id === id);
+  if (!task) return;
+
+  const input = document.createElement('input');
+  input.className = 'todo-rename-input';
+  input.value = task.text;
+  textEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let saved = false;
+  function save() {
+    if (saved) return;
+    saved = true;
+    const newText = input.value.trim();
+    if (newText && newText !== task.text) {
+      const tasks = loadTasks();
+      const idx = tasks.findIndex(t => t.id === id);
+      if (idx !== -1) { tasks[idx].text = newText; saveTasks(tasks); }
+    }
+    renderTodo();
+  }
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { saved = true; renderTodo(); }
+  });
+  input.addEventListener('blur', save);
+}
+
 function renderTodo() {
   const tasks    = loadTasks();
   const today    = todayStr();
@@ -272,8 +409,14 @@ function renderTodo() {
   tasks.forEach(task => {
     const isCarried = task.addedDate < today;
     const el = document.createElement('div');
-    el.className = 'todo-item' + (task.done ? ' done' : '');
+    el.className = 'todo-item'
+      + (task.done    ? ' done'    : '')
+      + (task.current ? ' current' : '');
+    el.setAttribute('draggable', 'true');
+    el.dataset.taskId = task.id;
+
     el.innerHTML = `
+      <div class="drag-handle" title="Перетащить">⠿</div>
       <div class="todo-checkbox" onclick="toggleTask('${task.id}')">
         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
           <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -286,7 +429,50 @@ function renderTodo() {
           ${isCarried ? `<span class="carry-badge">перенесено с ${task.addedDate}</span>` : ''}
         </div>
       </div>
-      <button class="todo-del" onclick="deleteTask('${task.id}')" title="Удалить">×</button>`;
+      <div class="todo-actions">
+        <button class="todo-current-btn${task.current ? ' active' : ''}" onclick="setCurrentTask('${task.id}')" title="${task.current ? 'Снять отметку текущей' : 'Отметить как текущую'}">◎</button>
+        <button class="todo-rename-btn" onclick="startRenameTask('${task.id}')" title="Переименовать">✎</button>
+        <button class="todo-del" onclick="deleteTask('${task.id}')" title="Удалить">×</button>
+      </div>`;
+
+    // Drag events
+    el.addEventListener('dragstart', e => {
+      dragSrcId = task.id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      document.querySelectorAll('.todo-item.drag-over').forEach(i => i.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragSrcId !== task.id) {
+        document.querySelectorAll('.todo-item.drag-over').forEach(i => i.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      }
+    });
+    el.addEventListener('dragleave', e => {
+      if (e.target === el || el.contains(e.relatedTarget) === false) {
+        el.classList.remove('drag-over');
+      }
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.remove('drag-over');
+      if (dragSrcId === task.id) return;
+      const tasks2 = loadTasks();
+      const srcIdx = tasks2.findIndex(t => t.id === dragSrcId);
+      const dstIdx = tasks2.findIndex(t => t.id === task.id);
+      if (srcIdx === -1 || dstIdx === -1) return;
+      const [moved] = tasks2.splice(srcIdx, 1);
+      tasks2.splice(dstIdx, 0, moved);
+      saveTasks(tasks2);
+      renderTodo();
+    });
+
     list.appendChild(el);
   });
 }
@@ -440,7 +626,11 @@ function showQuote(q) {
 
 function nextQuote() {
   if (!allQuotes.length) return;
-  quoteIndex    = (quoteIndex + 1) % allQuotes.length;
+  quoteIndex++;
+  if (quoteIndex >= allQuotes.length) {
+    shuffleArray(allQuotes);
+    quoteIndex = 0;
+  }
   quoteChangeAt = Date.now() + QUOTE_INTERVAL;
   showQuote(allQuotes[quoteIndex]);
 }
@@ -455,12 +645,20 @@ function updateCountdown() {
   if (remaining === 0) nextQuote();
 }
 
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
 fetch('/quotes.json')
   .then(r => { if (!r.ok) throw new Error(); return r.json(); })
   .then(data => {
     if (!Array.isArray(data) || !data.length) return;
-    allQuotes     = data;
-    quoteIndex    = new Date().getHours() % allQuotes.length;
+    allQuotes = data.slice();
+    shuffleArray(allQuotes);
+    quoteIndex    = 0;
     quoteChangeAt = Date.now() + QUOTE_INTERVAL;
     showQuote(allQuotes[quoteIndex]);
     setInterval(updateCountdown, 1000);
@@ -581,3 +779,116 @@ function renderReadingList() {
 }
 
 renderReadingList();
+
+// ── Running Progress ──────────────────────────────────────────────────────
+const RUNNING_KEY = 'prod_running_v1';
+
+const RUN_DISTANCES = [
+  { id: '5km',      label: '5 КМ',        km: 5       },
+  { id: '10km',     label: '10 КМ',       km: 10      },
+  { id: 'half',     label: 'ПОЛУМАРАФОН', km: 21.0975 },
+  { id: 'marathon', label: 'МАРАФОН',     km: 42.195  },
+];
+
+function loadRunning() {
+  try { return JSON.parse(localStorage.getItem(RUNNING_KEY) || '{}'); } catch { return {}; }
+}
+function saveRunning(data) { localStorage.setItem(RUNNING_KEY, JSON.stringify(data)); }
+
+function parseRunTime(str) {
+  const parts = str.trim().split(':').map(Number);
+  if (parts.some(p => isNaN(p) || p < 0)) return null;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return null;
+}
+
+function fmtRunTime(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function calcPace(secs, km) {
+  const secPerKm = secs / km;
+  const m = Math.floor(secPerKm / 60);
+  const s = Math.round(secPerKm % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtRunDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function submitRunResult(distId) {
+  const timeInput = document.getElementById('run-input-' + distId);
+  const dateInput = document.getElementById('run-date-' + distId);
+  const timeStr = timeInput ? timeInput.value.trim() : '';
+  const dateStr = dateInput ? dateInput.value : '';
+  if (!timeStr) return;
+  const secs = parseRunTime(timeStr);
+  if (!secs) { if (timeInput) timeInput.style.borderColor = 'var(--red)'; return; }
+  const data = loadRunning();
+  if (!data[distId]) data[distId] = [];
+  data[distId].push({ secs, date: dateStr, addedAt: new Date().toISOString() });
+  data[distId].sort((a, b) => a.secs - b.secs);
+  saveRunning(data);
+  renderRunning();
+}
+
+function deleteRunResult(distId, idx) {
+  const data = loadRunning();
+  if (!data[distId]) return;
+  data[distId].splice(idx, 1);
+  saveRunning(data);
+  renderRunning();
+}
+
+function renderRunning() {
+  const data = loadRunning();
+  const grid = document.getElementById('running-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  RUN_DISTANCES.forEach(dist => {
+    const results = data[dist.id] || [];
+    const best = results[0] || null;
+
+    const histHtml = results.length > 1
+      ? results.slice(1).map((r, i) => `
+          <div class="run-hist-item">
+            <span class="run-hist-time">${fmtRunTime(r.secs)}</span>
+            <span class="run-hist-pace">${calcPace(r.secs, dist.km)}/км</span>
+            ${r.date ? `<span class="run-hist-date">${fmtRunDate(r.date)}</span>` : '<span class="run-hist-date"></span>'}
+            <button class="run-hist-del" onclick="deleteRunResult('${dist.id}',${i+1})" title="Удалить">×</button>
+          </div>
+        `).join('')
+      : '';
+
+    const card = document.createElement('div');
+    card.className = 'run-card' + (best ? ' run-card-has-result' : '');
+    card.innerHTML = `
+      <div class="run-dist-label">${dist.label}</div>
+      <div class="run-best-block">
+        ${best ? `
+          <div class="run-time-main">${fmtRunTime(best.secs)}</div>
+          <div class="run-pace-main">⌀ ${calcPace(best.secs, dist.km)} /км</div>
+          ${best.date ? `<div class="run-date-main">${fmtRunDate(best.date)}</div>` : ''}
+        ` : `<div class="run-empty">—</div>`}
+      </div>
+      ${histHtml ? `<div class="run-history">${histHtml}</div>` : ''}
+      <div class="run-add-row">
+        <input type="text" class="run-time-input" id="run-input-${dist.id}" placeholder="мм:сс" />
+        <input type="date" class="run-date-input" id="run-date-${dist.id}" />
+        <button class="run-add-btn" onclick="submitRunResult('${dist.id}')" title="Добавить результат">+</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+renderRunning();

@@ -59,13 +59,91 @@
       <button class="cush-btn" onclick="changeCushions(-1)">−</button>
     </div>
   </div>
+
+  <!-- Ипотека -->
+  <div class="widget widget-mortgage" id="mortgage-widget">
+    <div class="mortgage-icon">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 15 L17 4 L31 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="6" y="15" width="22" height="15" rx="1.5" stroke="currentColor" stroke-width="2.2"/>
+        <rect x="13" y="21" width="8" height="9" rx="1" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+    </div>
+    <div class="mortgage-body" id="mortgage-display">
+      <div class="mortgage-payment-label">ежемесячный платёж</div>
+      <div class="mortgage-payment-value" id="mort-payment">0 ₽</div>
+      <div class="mortgage-debt-row">Остаток: <span id="mort-debt">0 ₽</span></div>
+      <div class="mortgage-meta-row">
+        <span id="mort-rate">0%</span>
+        <span class="mort-sep">·</span>
+        <span id="mort-dates">—</span>
+        <span class="mort-sep">·</span>
+        <span id="mort-payday">—</span>
+      </div>
+    </div>
+    <div class="mortgage-edit-panel" id="mortgage-edit-panel" style="display:none">
+      <div class="mort-field-row">
+        <label class="mort-field-label">Платёж, ₽</label>
+        <input type="number" class="mort-input" id="mort-input-payment" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div class="mort-field-row">
+        <label class="mort-field-label">Остаток, ₽</label>
+        <input type="number" class="mort-input" id="mort-input-debt" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div class="mort-field-row">
+        <label class="mort-field-label">Ставка, %</label>
+        <input type="number" class="mort-input" id="mort-input-rate" min="0" step="0.1" placeholder="0" />
+      </div>
+      <div class="mort-field-row">
+        <label class="mort-field-label">Открыт</label>
+        <input type="date" class="mort-input mort-date" id="mort-input-start" />
+      </div>
+      <div class="mort-field-row">
+        <label class="mort-field-label">Закрыт</label>
+        <input type="date" class="mort-input mort-date" id="mort-input-end" />
+      </div>
+      <div class="mort-field-row">
+        <label class="mort-field-label">День оплаты</label>
+        <input type="number" class="mort-input" id="mort-input-payday" min="1" max="31" placeholder="1" />
+      </div>
+      <div class="mort-btns">
+        <button class="mort-save-btn" onclick="saveMortgage()">Сохранить</button>
+        <button class="mort-cancel-btn" onclick="closeMortgageEdit()">Отмена</button>
+      </div>
+    </div>
+    <button class="mortgage-edit-btn" id="mortgage-edit-btn" onclick="toggleMortgageEdit()" title="Редактировать">✎</button>
+  </div>
+
+</div>
+
+<!-- Running Progress -->
+<div class="running-section">
+  <div class="running-inner">
+    <div class="running-left">
+      <svg class="running-figure" width="52" height="68" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="36" cy="9" r="6.5" fill="currentColor"/>
+        <path d="M36 16 Q35 20 30 32" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M34 21 L44 14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M32 23 L20 29" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M30 32 L42 44 L48 57" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M30 32 L18 43 L26 57" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="running-section-title">Прогресс<br/>в беге</div>
+    </div>
+    <div class="running-grid" id="running-grid"></div>
+  </div>
 </div>
 
 <!-- Слово дня -->
 <section class="wod-section" id="wod-section">
   <div class="wod-inner">
 
-    <div class="wod-header-label">📚 Слово дня</div>
+    <div class="wod-header-row">
+      <div class="wod-header-label">📚 Слово дня</div>
+      <button class="wod-archive-btn" id="wod-archive-btn" onclick="toggleWodArchive()">
+        <span>📖</span> Архив
+      </button>
+    </div>
 
     <!-- Загрузка -->
     <div id="wod-loading" class="wod-loading">
@@ -75,23 +153,43 @@
 
     <!-- Контент -->
     <div id="wod-content" class="wod-content" style="display:none">
-      <div class="wod-left">
-        <div class="wod-word-row">
+
+      <!-- Заголовок слова -->
+      <div class="wod-word-header">
+        <div class="wod-word-main-row">
           <span class="wod-word" id="wod-word"></span>
+          <span class="wod-word-ru" id="wod-word-ru"></span>
+        </div>
+        <div class="wod-word-sub-row">
           <span class="wod-phonetic" id="wod-phonetic"></span>
           <span class="wod-pos" id="wod-pos"></span>
         </div>
-        <div class="wod-def-row">
+      </div>
+
+      <!-- Тело: определение + примеры -->
+      <div class="wod-body">
+        <div class="wod-left">
+          <div class="wod-block-label">Определение</div>
           <div class="wod-def-en" id="wod-definition"></div>
           <div class="wod-def-ru" id="wod-translation"></div>
+          <div id="wod-synonyms-block" style="display:none">
+            <div class="wod-block-label wod-block-label-mt">Синонимы и словосочетания</div>
+            <div class="wod-synonyms-list" id="wod-synonyms"></div>
+          </div>
+          <div class="wod-notice" id="wod-notice"></div>
         </div>
-        <div class="wod-notice" id="wod-notice"></div>
+        <div class="wod-right" id="wod-examples-block" style="display:none">
+          <div class="wod-block-label">Примеры использования</div>
+          <div id="wod-examples-list"></div>
+        </div>
       </div>
-      <div class="wod-right" id="wod-example-block">
-        <div class="wod-example-label">Пример</div>
-        <div class="wod-example-en" id="wod-example-en"></div>
-        <div class="wod-example-ru" id="wod-example-ru"></div>
-      </div>
+
+    </div>
+
+    <!-- Архив -->
+    <div class="wod-archive-panel" id="wod-archive-panel" style="display:none">
+      <div class="wod-archive-header">Предыдущие слова</div>
+      <div class="wod-archive-list" id="wod-archive-list"></div>
     </div>
 
   </div>
