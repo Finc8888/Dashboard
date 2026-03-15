@@ -192,8 +192,11 @@ function renderWod(data) {
   const exList  = document.getElementById('wod-examples-list');
   if (data.examples && data.examples.length) {
     exList.innerHTML = data.examples.map((ex, i) => `
-      <div class="wod-example-item">
-        <div class="wod-example-num">Пример ${i + 1}</div>
+      <div class="wod-example-item" id="wod-ex-item-${i}">
+        <div class="wod-example-header">
+          <div class="wod-example-num">Пример ${i + 1}</div>
+          <button class="wod-example-edit-btn" onclick="startEditExample(${i})" title="Редактировать пример">✎</button>
+        </div>
         <div class="wod-example-en">"${escHtml(ex.en)}"</div>
         ${ex.ru ? `<div class="wod-example-ru">«${escHtml(ex.ru)}»</div>` : ''}
       </div>`).join('');
@@ -201,6 +204,52 @@ function renderWod(data) {
   } else {
     exBlock.style.display = 'none';
   }
+}
+
+function startEditExample(idx) {
+  const cached = getCachedWod();
+  if (!cached || !cached.examples || !cached.examples[idx]) return;
+  const ex = cached.examples[idx];
+  const itemEl = document.getElementById(`wod-ex-item-${idx}`);
+  if (!itemEl) return;
+
+  itemEl.innerHTML = `
+    <div class="wod-example-header">
+      <div class="wod-example-num">Пример ${idx + 1}</div>
+    </div>
+    <div class="wod-example-edit-row">
+      <label class="wod-example-edit-label">EN</label>
+      <textarea class="wod-example-edit-input" id="wod-ex-en-${idx}" rows="2">${escHtml(ex.en)}</textarea>
+    </div>
+    <div class="wod-example-edit-row">
+      <label class="wod-example-edit-label">RU</label>
+      <textarea class="wod-example-edit-input" id="wod-ex-ru-${idx}" rows="2">${escHtml(ex.ru || '')}</textarea>
+    </div>
+    <div class="wod-example-edit-actions">
+      <button class="wod-example-save-btn" onclick="saveExample(${idx})">Сохранить</button>
+      <button class="wod-example-cancel-btn" onclick="cancelEditExample()">Отмена</button>
+    </div>`;
+}
+
+function saveExample(idx) {
+  const enEl = document.getElementById(`wod-ex-en-${idx}`);
+  const ruEl = document.getElementById(`wod-ex-ru-${idx}`);
+  if (!enEl) return;
+  const newEn = enEl.value.trim();
+  const newRu = ruEl ? ruEl.value.trim() : '';
+  if (!newEn) return;
+
+  const cached = getCachedWod();
+  if (!cached || !cached.examples || !cached.examples[idx]) return;
+  cached.examples[idx] = { en: newEn, ru: newRu };
+  localStorage.setItem(WOD_CACHE_KEY, JSON.stringify(cached));
+  saveToWodArchive(cached);
+  renderWod(cached);
+}
+
+function cancelEditExample() {
+  const cached = getCachedWod();
+  if (cached) renderWod(cached);
 }
 
 // ── Cache ─────────────────────────────────────────────────────────────────

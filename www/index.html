@@ -24,6 +24,12 @@
   </div>
 </header>
 
+<!-- Projects nav -->
+<nav class="projects-nav" id="projects-nav">
+  <div class="projects-nav-label">Проекты</div>
+  <div class="projects-nav-list" id="projects-nav-list"></div>
+</nav>
+
 <!-- Цитата из файла -->
 <div id="quote-banner">
   <div class="quote-icon">💬</div>
@@ -45,6 +51,10 @@
       <div class="widget-value days-value" id="days-counter">0</div>
       <div class="widget-label">дней без вредной привычки</div>
       <div class="widget-sub" id="days-since-label">с 9 марта</div>
+      <div class="days-fail-badges" id="days-fail-badges" style="display:none"></div>
+    </div>
+    <div class="cushion-controls">
+      <button class="cush-btn" onclick="resetDaysCounter()" title="Сбросить счётчик (нарушение)">↺</button>
     </div>
   </div>
   <div class="widget">

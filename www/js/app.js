@@ -28,13 +28,131 @@ function escHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ── Projects Hub ──────────────────────────────────────────────────────────
+const PROJECTS = [
+  {
+    id:    'gladys-blog',
+    label: 'Gladys Blog',
+    icon:  '✍️',
+    url:   'https://gladys-blog.local.net',
+    desc:  'Hugo · Nginx · Docker',
+  },
+  {
+    id:    'job-stats',
+    label: 'Job Statistics',
+    icon:  '📊',
+    url:   'http://localhost:3000',
+    desc:  'Go API · React · MySQL',
+  },
+];
+
+const PROJECT_STATUS = {}; // id → 'checking' | 'online' | 'offline'
+
+async function checkProject(project) {
+  PROJECT_STATUS[project.id] = 'checking';
+  renderProjectsNav();
+  try {
+    await fetch(project.url, {
+      mode:   'no-cors',
+      signal: AbortSignal.timeout(4000),
+    });
+    PROJECT_STATUS[project.id] = 'online';
+  } catch {
+    PROJECT_STATUS[project.id] = 'offline';
+  }
+  renderProjectsNav();
+}
+
+function openProject(project) {
+  if (PROJECT_STATUS[project.id] === 'offline') {
+    showProjectOfflineMsg(project.id);
+    return;
+  }
+  window.open(project.url, '_blank', 'noopener');
+}
+
+function showProjectOfflineMsg(projectId) {
+  const msgEl = document.getElementById('proj-msg-' + projectId);
+  if (!msgEl) return;
+  msgEl.style.display = '';
+  clearTimeout(msgEl._hideTimer);
+  msgEl._hideTimer = setTimeout(() => { msgEl.style.display = 'none'; }, 4000);
+}
+
+function renderProjectsNav() {
+  const list = document.getElementById('projects-nav-list');
+  if (!list) return;
+  list.innerHTML = PROJECTS.map(p => {
+    const status = PROJECT_STATUS[p.id] || 'checking';
+    const dotCls = status === 'online' ? 'proj-dot-online'
+                 : status === 'offline' ? 'proj-dot-offline'
+                 : 'proj-dot-checking';
+    return `
+      <div class="proj-item">
+        <button class="proj-btn" onclick="openProject(PROJECTS.find(p=>p.id==='${p.id}'))">
+          <span class="proj-dot ${dotCls}"></span>
+          <span class="proj-icon">${p.icon}</span>
+          <span class="proj-label">${p.label}</span>
+          <span class="proj-desc">${p.desc}</span>
+        </button>
+        <div class="proj-offline-msg" id="proj-msg-${p.id}" style="display:none">
+          Проект недоступен — запустите Docker-контейнер
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function initProjectsNav() {
+  renderProjectsNav();
+  PROJECTS.forEach(p => checkProject(p));
+  setInterval(() => PROJECTS.forEach(p => checkProject(p)), 30000);
+}
+
+initProjectsNav();
+
 // ── Days counter ──────────────────────────────────────────────────────────
-(function initDaysCounter() {
-  const start = new Date(new Date().getFullYear(), 2, 9); // 9 марта текущего года
+const DAYS_KEY = 'prod_days_v1';
+
+function loadDaysData() {
+  try { return JSON.parse(localStorage.getItem(DAYS_KEY)); } catch { return null; }
+}
+function saveDaysData(d) { localStorage.setItem(DAYS_KEY, JSON.stringify(d)); }
+
+function renderDaysCounter() {
+  let data = loadDaysData();
+  if (!data) {
+    const y = new Date().getFullYear();
+    data = { startDate: `${y}-03-09`, failCount: 0 };
+    saveDaysData(data);
+  }
+  const start = new Date(data.startDate + 'T00:00:00');
   const days  = Math.max(0, Math.floor((Date.now() - start) / 86400000));
   document.getElementById('days-counter').textContent = days;
-  document.getElementById('days-since-label').textContent = `с 9 марта ${start.getFullYear()}`;
-})();
+  const startFmt = start.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('days-since-label').textContent = `с ${startFmt}`;
+
+  const badgesEl = document.getElementById('days-fail-badges');
+  if (badgesEl) {
+    if (data.failCount > 0) {
+      badgesEl.innerHTML = Array(data.failCount).fill('<span class="fail-badge" title="Попытка бросить">💔</span>').join('');
+      badgesEl.style.display = '';
+    } else {
+      badgesEl.innerHTML = '';
+      badgesEl.style.display = 'none';
+    }
+  }
+}
+
+function resetDaysCounter() {
+  if (!confirm('Сбросить счётчик? Это отметит нарушение.')) return;
+  const data = loadDaysData() || { startDate: '', failCount: 0 };
+  data.failCount = (data.failCount || 0) + 1;
+  data.startDate = new Date().toISOString().slice(0, 10);
+  saveDaysData(data);
+  renderDaysCounter();
+}
+
+renderDaysCounter();
 
 // ── Financial cushions ────────────────────────────────────────────────────
 const CUSHION_KEY = 'prod_cushions';
@@ -848,6 +966,46 @@ function deleteRunResult(distId, idx) {
   renderRunning();
 }
 
+// edit state: { distId, idx } or null
+let runEditState = null;
+
+function startEditRun(distId, idx) {
+  runEditState = { distId, idx };
+  renderRunning();
+}
+
+function cancelEditRun() {
+  runEditState = null;
+  renderRunning();
+}
+
+function saveEditRun(distId, idx) {
+  const timeInput = document.getElementById('run-edit-time');
+  const dateInput = document.getElementById('run-edit-date');
+  const timeStr = timeInput ? timeInput.value.trim() : '';
+  const dateStr = dateInput ? dateInput.value : '';
+  if (!timeStr) return;
+  const secs = parseRunTime(timeStr);
+  if (!secs) { if (timeInput) timeInput.style.borderColor = 'var(--red)'; return; }
+  const data = loadRunning();
+  if (!data[distId] || data[distId][idx] === undefined) return;
+  data[distId][idx] = { ...data[distId][idx], secs, date: dateStr };
+  data[distId].sort((a, b) => a.secs - b.secs);
+  saveRunning(data);
+  runEditState = null;
+  renderRunning();
+}
+
+function buildRunEditForm(distId, idx, r) {
+  return `
+    <div class="run-edit-form">
+      <input type="text" class="run-time-input" id="run-edit-time" value="${fmtRunTime(r.secs)}" placeholder="мм:сс" />
+      <input type="date" class="run-date-input" id="run-edit-date" value="${r.date || ''}" />
+      <button class="run-add-btn" onclick="saveEditRun('${distId}',${idx})" title="Сохранить">✓</button>
+      <button class="run-hist-del" onclick="cancelEditRun()" title="Отмена">✕</button>
+    </div>`;
+}
+
 function renderRunning() {
   const data = loadRunning();
   const grid = document.getElementById('running-grid');
@@ -858,28 +1016,46 @@ function renderRunning() {
     const results = data[dist.id] || [];
     const best = results[0] || null;
 
+    const isEditingBest = runEditState && runEditState.distId === dist.id && runEditState.idx === 0;
+
+    let bestHtml = '';
+    if (best) {
+      if (isEditingBest) {
+        bestHtml = buildRunEditForm(dist.id, 0, best);
+      } else {
+        bestHtml = `
+          <div class="run-time-main">${fmtRunTime(best.secs)}</div>
+          <div class="run-pace-main">⌀ ${calcPace(best.secs, dist.km)} /км</div>
+          ${best.date ? `<div class="run-date-main">${fmtRunDate(best.date)}</div>` : ''}
+          <button class="run-edit-btn" onclick="startEditRun('${dist.id}',0)" title="Редактировать">✎</button>`;
+      }
+    } else {
+      bestHtml = `<div class="run-empty">—</div>`;
+    }
+
     const histHtml = results.length > 1
-      ? results.slice(1).map((r, i) => `
-          <div class="run-hist-item">
-            <span class="run-hist-time">${fmtRunTime(r.secs)}</span>
-            <span class="run-hist-pace">${calcPace(r.secs, dist.km)}/км</span>
-            ${r.date ? `<span class="run-hist-date">${fmtRunDate(r.date)}</span>` : '<span class="run-hist-date"></span>'}
-            <button class="run-hist-del" onclick="deleteRunResult('${dist.id}',${i+1})" title="Удалить">×</button>
-          </div>
-        `).join('')
+      ? results.slice(1).map((r, i) => {
+          const realIdx = i + 1;
+          const isEditingThis = runEditState && runEditState.distId === dist.id && runEditState.idx === realIdx;
+          if (isEditingThis) {
+            return `<div class="run-hist-item">${buildRunEditForm(dist.id, realIdx, r)}</div>`;
+          }
+          return `
+            <div class="run-hist-item">
+              <span class="run-hist-time">${fmtRunTime(r.secs)}</span>
+              <span class="run-hist-pace">${calcPace(r.secs, dist.km)}/км</span>
+              ${r.date ? `<span class="run-hist-date">${fmtRunDate(r.date)}</span>` : '<span class="run-hist-date"></span>'}
+              <button class="run-edit-btn" onclick="startEditRun('${dist.id}',${realIdx})" title="Редактировать">✎</button>
+              <button class="run-hist-del" onclick="deleteRunResult('${dist.id}',${realIdx})" title="Удалить">×</button>
+            </div>`;
+        }).join('')
       : '';
 
     const card = document.createElement('div');
     card.className = 'run-card' + (best ? ' run-card-has-result' : '');
     card.innerHTML = `
       <div class="run-dist-label">${dist.label}</div>
-      <div class="run-best-block">
-        ${best ? `
-          <div class="run-time-main">${fmtRunTime(best.secs)}</div>
-          <div class="run-pace-main">⌀ ${calcPace(best.secs, dist.km)} /км</div>
-          ${best.date ? `<div class="run-date-main">${fmtRunDate(best.date)}</div>` : ''}
-        ` : `<div class="run-empty">—</div>`}
-      </div>
+      <div class="run-best-block">${bestHtml}</div>
       ${histHtml ? `<div class="run-history">${histHtml}</div>` : ''}
       <div class="run-add-row">
         <input type="text" class="run-time-input" id="run-input-${dist.id}" placeholder="мм:сс" />
