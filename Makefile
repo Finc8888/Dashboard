@@ -1,29 +1,44 @@
--include .env
-export
+.PHONY: help up down restart logs up-all up-blog up-jobs quotes open build-auth clean
 
-QUOTES_OUT = www/quotes.json
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: up down restart logs open quotes
+# -- Core (Dashboard + Auth Gateway) --
+up: ## Start core services (Dashboard + Auth Gateway)
+	docker compose up -d --build
 
-quotes:
-ifdef QUOTES_FILE
-	python3 scripts/parse_quotes.py "$(QUOTES_FILE)" "$(QUOTES_OUT)"
-else
-	@echo "⚠  QUOTES_FILE не задан в .env — баннер цитат будет скрыт"
-endif
+down: ## Stop all services
+	docker compose --profile blog --profile jobs down
 
-up: quotes
-	docker compose up -d
-	@echo "Dashboard: http://localhost:8080"
+restart: ## Restart core services
+	docker compose restart
 
-down:
-	docker compose down
+logs: ## Show logs (follow)
+	docker compose --profile blog --profile jobs logs -f
 
-restart:
-	docker compose restart dashboard
+# -- All services --
+up-all: ## Start ALL services (core + blog + jobs)
+	docker compose --profile blog --profile jobs up -d --build
 
-logs:
-	docker compose logs -f dashboard
+# -- Optional profiles --
+up-blog: up ## Start core + Gladys Blog
+	docker compose --profile blog up -d --build
 
-open:
-	xdg-open http://localhost:8080 2>/dev/null || open http://localhost:8080 2>/dev/null || echo "Открой: http://localhost:8080"
+up-jobs: up ## Start core + Job Statistics
+	docker compose --profile blog --profile jobs up -d --build
+
+# -- Utilities --
+quotes: ## Parse quotes from markdown
+	python3 scripts/parse_quotes.py "$(shell grep QUOTES_FILE .env | cut -d= -f2)" > www/quotes.json
+
+open: ## Open Dashboard in browser
+	xdg-open http://localhost:80 2>/dev/null || open http://localhost:80
+
+build-auth: ## Rebuild Auth Gateway
+	docker compose build auth-gateway auth-admin
+
+clean: ## Remove all volumes and containers
+	docker compose --profile blog --profile jobs down -v
+
+status: ## Show status of all services
+	docker compose --profile blog --profile jobs ps

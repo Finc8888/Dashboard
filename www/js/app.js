@@ -31,17 +31,24 @@ function escHtml(s) {
 // ── Projects Hub ──────────────────────────────────────────────────────────
 const PROJECTS = [
   {
+    id:    'auth-admin',
+    label: 'Админ-панель',
+    icon:  '🔐',
+    url:   '/admin/',
+    desc:  'Auth Gateway · Управление пользователями',
+  },
+  {
     id:    'gladys-blog',
     label: 'Gladys Blog',
     icon:  '✍️',
-    url:   'https://gladys-blog.local.net',
+    url:   '/blog/',
     desc:  'Hugo · Nginx · Docker',
   },
   {
     id:    'job-stats',
     label: 'Job Statistics',
     icon:  '📊',
-    url:   'http://localhost:3000',
+    url:   '/jobs/',
     desc:  'Go API · React · MySQL',
   },
 ];
@@ -52,11 +59,8 @@ async function checkProject(project) {
   PROJECT_STATUS[project.id] = 'checking';
   renderProjectsNav();
   try {
-    await fetch(project.url, {
-      mode:   'no-cors',
-      signal: AbortSignal.timeout(4000),
-    });
-    PROJECT_STATUS[project.id] = 'online';
+    const r = await fetch(project.url, { credentials: 'include', signal: AbortSignal.timeout(4000) });
+    PROJECT_STATUS[project.id] = r.ok || r.status === 401 ? 'online' : 'offline';
   } catch {
     PROJECT_STATUS[project.id] = 'offline';
   }
@@ -68,7 +72,7 @@ function openProject(project) {
     showProjectOfflineMsg(project.id);
     return;
   }
-  window.open(project.url, '_blank', 'noopener');
+  window.location.href = project.url;
 }
 
 function showProjectOfflineMsg(projectId) {
@@ -148,6 +152,18 @@ function resetDaysCounter() {
   const data = loadDaysData() || { startDate: '', failCount: 0 };
   data.failCount = (data.failCount || 0) + 1;
   data.startDate = new Date().toISOString().slice(0, 10);
+  saveDaysData(data);
+  renderDaysCounter();
+}
+
+function editDaysDate() {
+  const data = loadDaysData() || { startDate: new Date().toISOString().slice(0, 10), failCount: 0 };
+  const newDate = prompt('Введите дату начала (ГГГГ-ММ-ДД):', data.startDate);
+  if (!newDate) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) { alert('Неверный формат. Используйте ГГГГ-ММ-ДД'); return; }
+  const d = new Date(newDate + 'T00:00:00');
+  if (isNaN(d.getTime())) { alert('Некорректная дата'); return; }
+  data.startDate = newDate;
   saveDaysData(data);
   renderDaysCounter();
 }
@@ -788,12 +804,46 @@ fetch('/quotes.json')
 const READING_KEY = 'prod_reading_v1';
 
 const BOOKS = [
-  { id: 'chan-1',          num: 1,  title: 'История твоей жизни', author: 'Тед Чан',               type: 'сборник'   },
-  { id: 'chan-2',          num: 2,  title: 'Выдох',               author: 'Тед Чан',               type: 'сборник'   },
+  { id: 'chan-1', num: 1, title: 'История твоей жизни', author: 'Тед Чан', type: 'сборник', subItems: [
+    { id: 'chan-1-s1', title: 'Вавилонская башня' },
+    { id: 'chan-1-s2', title: 'Понимай' },
+    { id: 'chan-1-s3', title: 'Деление на ноль' },
+    { id: 'chan-1-s4', title: 'История твоей жизни' },
+    { id: 'chan-1-s5', title: 'Семьдесят две буквы' },
+    { id: 'chan-1-s6', title: 'Эволюция человеческой науки' },
+    { id: 'chan-1-s7', title: 'Ад — это отсутствие Бога' },
+    { id: 'chan-1-s8', title: 'Тебе нравится, что ты видишь?' },
+  ]},
+  { id: 'chan-2', num: 2, title: 'Выдох', author: 'Тед Чан', type: 'сборник', subItems: [
+    { id: 'chan-2-s1', title: 'Купец и волшебные врата' },
+    { id: 'chan-2-s2', title: 'Выдох' },
+    { id: 'chan-2-s3', title: 'Чего от нас ждут' },
+    { id: 'chan-2-s4', title: 'Жизненный цикл программных объектов' },
+    { id: 'chan-2-s5', title: 'Дейси, переменная' },
+    { id: 'chan-2-s6', title: 'Истина факта, истина чувства' },
+    { id: 'chan-2-s7', title: 'Великое молчание' },
+    { id: 'chan-2-s8', title: 'Ома' },
+    { id: 'chan-2-s9', title: 'Тревога — это головокружение свободы' },
+  ]},
   { id: 'leguin-1',        num: 3,  title: 'Обездоленный',        author: 'Урсула Ле Гуин',        type: 'роман'     },
   { id: 'leguin-2',        num: 4,  title: 'Левая рука тьмы',     author: 'Урсула Ле Гуин',        type: 'роман'     },
-  { id: 'leguin-3',        num: 5,  title: 'Волшебник Земноморья',author: 'Урсула Ле Гуин',        type: 'трилогия'  },
-  { id: 'lem-1',           num: 6,  title: 'Кибериада',           author: 'Станислав Лем',         type: 'сборник'   },
+  { id: 'leguin-3', num: 5, title: 'Волшебник Земноморья', author: 'Урсула Ле Гуин', type: 'трилогия', subItems: [
+    { id: 'leguin-3-s1', title: 'Волшебник Земноморья' },
+    { id: 'leguin-3-s2', title: 'Гробницы Атуана' },
+    { id: 'leguin-3-s3', title: 'На последнем берегу' },
+  ]},
+  { id: 'lem-1', num: 6, title: 'Кибериада', author: 'Станислав Лем', type: 'сборник', subItems: [
+    { id: 'lem-1-s1', title: 'Как уцелела Вселенная' },
+    { id: 'lem-1-s2', title: 'Три электрорыцаря' },
+    { id: 'lem-1-s3', title: 'Путешествие первое' },
+    { id: 'lem-1-s4', title: 'Путешествие второе' },
+    { id: 'lem-1-s5', title: 'Путешествие третье' },
+    { id: 'lem-1-s6', title: 'Путешествие четвёртое' },
+    { id: 'lem-1-s7', title: 'Путешествие пятое' },
+    { id: 'lem-1-s8', title: 'Путешествие шестое' },
+    { id: 'lem-1-s9', title: 'Путешествие седьмое' },
+    { id: 'lem-1-s10', title: 'Альтруизин' },
+  ]},
   { id: 'lem-2',           num: 7,  title: 'Непобедимый',         author: 'Станислав Лем',         type: 'роман'     },
   { id: 'hofstadter',      num: 8,  title: 'Гёдель, Эшер, Бах',  author: 'Дуглас Хофштадтер',    type: 'нон-фикшн' },
   { id: 'csikszentmihalyi',num: 9,  title: 'Поток',               author: 'Михай Чиксентмихайи',  type: 'нон-фикшн' },
@@ -807,6 +857,50 @@ function saveReading(data) { localStorage.setItem(READING_KEY, JSON.stringify(da
 
 function getBookState(data, id) {
   return data[id] || { status: 'waiting', page: 0, startedAt: null };
+}
+
+// Track which books are expanded
+const expandedBooks = {};
+
+function toggleBookExpand(id) {
+  expandedBooks[id] = !expandedBooks[id];
+  renderReadingList();
+}
+
+function syncParentFromSubs(data, book) {
+  if (!book.subItems) return;
+  const allDone = book.subItems.every(s => getBookState(data, s.id).status === 'done');
+  const anyStarted = book.subItems.some(s => getBookState(data, s.id).status !== 'waiting');
+  const parentState = getBookState(data, book.id);
+  if (allDone) {
+    data[book.id] = { ...parentState, status: 'done' };
+  } else if (anyStarted && parentState.status === 'done') {
+    data[book.id] = { ...parentState, status: 'reading', startedAt: parentState.startedAt || todayStr() };
+  }
+}
+
+function syncSubsFromParent(data, book, newStatus) {
+  if (!book.subItems) return;
+  if (newStatus === 'done') {
+    book.subItems.forEach(s => {
+      data[s.id] = { ...getBookState(data, s.id), status: 'done' };
+    });
+  } else if (newStatus === 'waiting') {
+    book.subItems.forEach(s => {
+      data[s.id] = { ...getBookState(data, s.id), status: 'waiting' };
+    });
+  }
+}
+
+function toggleSubItemStatus(bookId, subId) {
+  const data = loadReading();
+  const state = getBookState(data, subId);
+  const next = state.status === 'done' ? 'waiting' : 'done';
+  data[subId] = { ...state, status: next };
+  const book = BOOKS.find(b => b.id === bookId);
+  if (book) syncParentFromSubs(data, book);
+  saveReading(data);
+  renderReadingList();
 }
 
 function cycleBookStatus(id) {
@@ -829,6 +923,10 @@ function cycleBookStatus(id) {
     status: next,
     startedAt: next === 'reading' && !state.startedAt ? todayStr() : state.startedAt,
   };
+
+  const book = BOOKS.find(b => b.id === id);
+  if (book) syncSubsFromParent(data, book, next);
+
   saveReading(data);
   renderReadingList();
 }
@@ -860,6 +958,8 @@ function renderReadingList() {
   BOOKS.forEach(book => {
     const state   = getBookState(data, book.id);
     const { status, page, startedAt } = state;
+    const hasSubs = book.subItems && book.subItems.length > 0;
+    const isExpanded = expandedBooks[book.id];
 
     const el = document.createElement('div');
     el.className = 'book-item book-' + status;
@@ -878,6 +978,10 @@ function renderReadingList() {
         <span class="book-page-since" id="book-page-since-${book.id}">${startedAt ? 'с ' + startedAt : ''}</span>
       </div>` : '';
 
+    const subsDoneCount = hasSubs ? book.subItems.filter(s => getBookState(data, s.id).status === 'done').length : 0;
+    const subsCounter = hasSubs ? `<span class="book-subs-counter">${subsDoneCount}/${book.subItems.length}</span>` : '';
+    const expandBtn = hasSubs ? `<button class="book-expand-btn${isExpanded ? ' expanded' : ''}" onclick="toggleBookExpand('${book.id}')" title="Раскрыть содержание">▸</button>` : '';
+
     el.innerHTML = `
       <button class="book-status-btn" onclick="cycleBookStatus('${book.id}')" title="Изменить статус">
         ${STATUS_ICON[status]}
@@ -887,12 +991,34 @@ function renderReadingList() {
           <span class="book-num">${book.num}.</span>
           <span class="book-title">${book.title}</span>
           <span class="book-type">${book.type}</span>
+          ${subsCounter}
+          ${expandBtn}
         </div>
         <div class="book-author">${book.author}</div>
         ${pageRow}
       </div>`;
 
     container.appendChild(el);
+
+    if (hasSubs && isExpanded) {
+      const subsEl = document.createElement('div');
+      subsEl.className = 'book-subs-list';
+      book.subItems.forEach(sub => {
+        const subState = getBookState(data, sub.id);
+        const subDone = subState.status === 'done';
+        const subItem = document.createElement('div');
+        subItem.className = 'book-sub-item' + (subDone ? ' sub-done' : '');
+        subItem.innerHTML = `
+          <button class="book-sub-checkbox${subDone ? ' checked' : ''}" onclick="toggleSubItemStatus('${book.id}','${sub.id}')">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <span class="book-sub-title">${sub.title}</span>`;
+        subsEl.appendChild(subItem);
+      });
+      container.appendChild(subsEl);
+    }
   });
 }
 
@@ -1068,3 +1194,44 @@ function renderRunning() {
 }
 
 renderRunning();
+
+// ── Data Export / Import ─────────────────────────────────────────────────
+function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dashboard-data-' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (typeof data !== 'object' || data === null) throw new Error('bad format');
+        const count = Object.keys(data).length;
+        if (!confirm(`Импортировать ${count} записей? Существующие данные с совпадающими ключами будут перезаписаны.`)) return;
+        Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, v));
+        location.reload();
+      } catch {
+        alert('Ошибка: файл не является корректным JSON-экспортом.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}

@@ -1,10 +1,148 @@
 services:
-  dashboard:
+  # -- Gateway --
+  gateway:
     image: caddy:2-alpine
-    container_name: productivity-dashboard
+    container_name: gateway
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./www:/srv/www:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [gateway]
+    depends_on:
+      auth-gateway:
+        condition: service_healthy
+      dashboard:
+        condition: service_started
+
+  # -- Dashboard (static) --
+  dashboard:
+    image: caddy:2-alpine
+    container_name: dashboard
+    restart: unless-stopped
+    volumes:
+      - ./www:/srv/www:ro
+      - ./DashboardCaddyfile:/etc/caddy/Caddyfile:ro
+    networks: [gateway]
+
+  # -- Auth Gateway Backend (ex-economicon) --
+  auth-gateway:
+    build: ../economicon/backend
+    container_name: auth-gateway
+    restart: unless-stopped
+    environment:
+      DB_HOST: auth-db
+      DB_PORT: "3306"
+      DB_USER: ${AUTH_DB_USER:-appuser}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:-secret}
+      DB_NAME: ${AUTH_DB_NAME:-authdb}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: "8080"
+    networks: [gateway, auth-internal]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -- Auth Gateway Frontend (admin panel) --
+  auth-admin:
+    build: ../economicon/frontend
+    container_name: auth-admin
+    restart: unless-stopped
+    networks: [gateway]
+
+  # -- Auth DB --
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${AUTH_DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${AUTH_DB_NAME:-authdb}
+      MYSQL_USER: ${AUTH_DB_USER:-appuser}
+      MYSQL_PASSWORD: ${AUTH_DB_PASSWORD:-secret}
+    volumes:
+      - auth_data:/var/lib/mysql
+      - ../economicon/backend/migrations:/docker-entrypoint-initdb.d:ro
+    networks: [auth-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # -- Gladys Blog --
+  gladys-blog:
+    build: ../Gladys-Blog
+    container_name: gladys-blog
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["blog"]
+
+  # -- Job Statistics Frontend --
+  job-stats-frontend:
+    build: ../job-statistics-platform/frontend
+    container_name: job-stats-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["jobs"]
+
+  # -- Job Statistics API --
+  job-stats-api:
+    build: ../job-statistics-platform/backend
+    container_name: job-stats-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: job-stats-db
+      DB_PORT: "3306"
+      DB_USER: ${JOBS_DB_USER:-jobuser}
+      DB_PASSWORD: ${JOBS_DB_PASSWORD:-jobpassword}
+      DB_NAME: ${JOBS_DB_NAME:-job_stats}
+      API_PORT: "8081"
+    networks: [gateway, jobs-internal]
+    depends_on:
+      job-stats-db:
+        condition: service_healthy
+    profiles: ["jobs"]
+
+  # -- Job Statistics DB --
+  job-stats-db:
+    image: mysql:8.0
+    container_name: job-stats-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${JOBS_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${JOBS_DB_NAME:-job_stats}
+      MYSQL_USER: ${JOBS_DB_USER:-jobuser}
+      MYSQL_PASSWORD: ${JOBS_DB_PASSWORD:-jobpassword}
+    volumes:
+      - jobs_data:/var/lib/mysql
+      - ../job-statistics-platform/backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [jobs-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["jobs"]
+
+networks:
+  gateway:
+  auth-internal:
+  jobs-internal:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  auth_data:
+  jobs_data:
+    external: true
+    name: job-statistics-platform_mysql_data

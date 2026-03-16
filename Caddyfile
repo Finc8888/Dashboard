@@ -1,12 +1,78 @@
+{
+    auto_https off
+}
+
 :80 {
-    root * /srv/www
-    file_server
-    encode gzip
+    # -- Auth endpoints (public, no forward_auth) --
+    handle /api/auth/* {
+        reverse_proxy auth-gateway:8080
+    }
+
+    handle /api/health {
+        reverse_proxy auth-gateway:8080
+    }
+
+    # -- Admin API (protected by backend middleware) --
+    handle /api/admin/* {
+        reverse_proxy auth-gateway:8080
+    }
+
+    # -- Admin Panel UI --
+    handle /admin/* {
+        uri strip_prefix /admin
+        reverse_proxy auth-admin:80
+    }
+    handle /admin {
+        redir /admin/ permanent
+    }
+
+    # -- Blog (wrapper with Dashboard link) --
+    handle /blog {
+        redir /blog/ permanent
+    }
+    handle /blog/ {
+        root * /srv/www
+        rewrite * /blog-wrapper.html
+        file_server
+    }
+    # -- Blog raw content (inside iframe) --
+    handle /blog-raw/* {
+        uri strip_prefix /blog-raw
+        reverse_proxy gladys-blog:443 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+    }
+    handle /blog-raw {
+        redir /blog-raw/ permanent
+    }
+
+    # -- Job Statistics --
+    handle /jobs/api/* {
+        uri strip_prefix /jobs
+        reverse_proxy job-stats-api:8081
+    }
+    handle /jobs/* {
+        uri strip_prefix /jobs
+        reverse_proxy job-stats-frontend:3000
+    }
+    handle /jobs {
+        redir /jobs/ permanent
+    }
+
+    # -- Dashboard (default) --
+    handle {
+        reverse_proxy dashboard:80
+    }
+
+    encode gzip zstd
 
     header {
-        Cache-Control "no-cache, no-store, must-revalidate"
         X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
+    }
+    header /blog-raw/* {
+        X-Frame-Options "SAMEORIGIN"
     }
 
     log {

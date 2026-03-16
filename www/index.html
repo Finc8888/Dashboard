@@ -10,6 +10,10 @@
 </head>
 <body>
 
+<div id="auth-overlay" class="auth-overlay"></div>
+
+<div id="main-content">
+
 <header>
   <div>
     <h1>Productivity Dashboard</h1>
@@ -21,6 +25,7 @@
       <span class="notif-label" id="notif-label">уведомления</span>
     </button>
     <div id="live-clock">00:00</div>
+    <div class="user-badge" id="user-badge" style="display:none"></div>
   </div>
 </header>
 
@@ -54,6 +59,7 @@
       <div class="days-fail-badges" id="days-fail-badges" style="display:none"></div>
     </div>
     <div class="cushion-controls">
+      <button class="cush-btn" onclick="editDaysDate()" title="Изменить дату начала">✎</button>
       <button class="cush-btn" onclick="resetDaysCounter()" title="Сбросить счётчик (нарушение)">↺</button>
     </div>
   </div>
@@ -381,9 +387,17 @@
   <div class="footer-ornament">✦</div>
   <blockquote class="footer-quote">Заблудшие души не ищут учителей. Они ищут людей, рядом с которыми им легче быть лучше</blockquote>
   <div class="footer-ornament">✦</div>
+  <div class="data-tools">
+    <button class="data-tool-btn" onclick="exportData()" title="Скачать все данные в JSON">&#x2B73; Экспорт данных</button>
+    <button class="data-tool-btn" onclick="importData()" title="Загрузить данные из JSON-файла">&#x2B71; Импорт данных</button>
+  </div>
 </footer>
 
+</div><!-- /main-content -->
+
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 <script src="js/word-of-day.js"></script>
+<script>initAuth();</script>
 </body>
 </html>

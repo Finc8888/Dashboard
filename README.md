@@ -1,76 +1,102 @@
-# Productivity Dashboard
+# Productivity Dashboard — Unified Platform
 
-Личный дашборд продуктивности. Визуализирует ежедневный распорядок, план изучения Go, ключевые принципы и цели на 30 дней.
+Центральный дашборд продуктивности + единая точка входа для всех локальных проектов с аутентификацией.
+
+## Обзор
+
+- **Dashboard** — визуализация расписания, прогресса Go, целей, счётчиков
+- **Auth Gateway** (ex-economicon) — централизованная аутентификация (JWT, RBAC)
+- **Project Hub** — все проекты доступны через единый Caddy Gateway
 
 ## Быстрый старт
 
 ```bash
 cp .env.example .env
-# Указать путь к файлу с цитатами в .env
-make up
+# Задать JWT_SECRET и остальные переменные
+
+make up        # Core: Dashboard + Auth Gateway + Caddy
+make up-all    # Все проекты: + Blog + Job Statistics
 ```
 
-## Стек
+Дашборд: **http://localhost**
 
-- **Caddy 2** — веб-сервер
-- **Docker / Docker Compose** — контейнеризация
-- **Vanilla HTML/CSS/JS** — никаких зависимостей, чистый фронтенд
+## Архитектура
 
-## Баннер цитат
+```
+Браузер → Caddy Gateway (:80)
+              │
+              ├── forward_auth → Auth Gateway (JWT проверка)
+              │                   ↓
+              │            X-Auth-User / X-Auth-Role
+              │
+              ├── /              → Dashboard (static)
+              ├── /api/auth/*    → Auth Gateway
+              ├── /api/admin/*   → Auth Gateway
+              ├── /admin/*       → Auth Gateway (Admin Panel)
+              ├── /blog/*        → Gladys Blog (Hugo + Nginx)
+              └── /jobs/*        → Job Statistics (React + Go)
+```
 
-Дашборд показывает случайную цитату из markdown-файла вверху страницы. Цитата меняется автоматически каждый час.
+## Сервисы
 
-**Настройка:**
-1. Создать `.env` на основе `.env.example`
-2. Указать путь к файлу с цитатами:
-   ```
-   QUOTES_FILE=/home/user/notes/quotes.md
-   ```
-3. Запустить `make up` — парсер создаст `www/quotes.json` перед стартом контейнера
+| Сервис | Путь | Описание |
+|--------|------|----------|
+| Dashboard | `/` | Основной дашборд (Caddy + static HTML/JS) |
+| Auth Gateway | `/api/auth/*`, `/api/admin/*` | Аутентификация, JWT, управление пользователями |
+| Admin Panel | `/admin/` | Управление пользователями и аудит (role: admin) |
+| Gladys Blog | `/blog/` | Блог на Hugo (profile: blog) |
+| Job Statistics | `/jobs/` | Статистика вакансий (profile: jobs) |
 
-Формат исходного файла: markdown-блоки вида `> **«Цитата»** / > — Пояснение`.
-Без `.env` или при отсутствии файла баннер просто не отображается.
-
-## Запуск
+## Make-команды
 
 ```bash
-make up       # спарсить цитаты (если задан QUOTES_FILE) + запустить контейнер
-make down     # остановить
-make restart  # перезапустить
-make logs     # логи в реальном времени
-make open     # открыть в браузере
-make quotes   # только обновить quotes.json (без перезапуска контейнера)
+make up          # Core: Dashboard + Auth Gateway
+make up-all      # Все сервисы
+make up-blog     # Core + Blog
+make up-jobs     # Core + Job Statistics
+make down        # Остановить все контейнеры
+make logs        # Логи в реальном времени
+make status      # Статус контейнеров
+make clean       # Остановить + удалить volumes
 ```
 
-Дашборд доступен на **http://localhost:8080**
+## Аутентификация
+
+- Первый пользователь регистрируется через форму на Dashboard
+- Seed-данные создают admin: `admin@example.com` / `changeme123`
+- JWT в HttpOnly cookie — SSO между всеми проектами
+- Роли: `admin` (+ админка), `user` (Dashboard + проекты)
+- Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` от Caddy
+
+## Добавление нового проекта
+
+1. Добавить сервис в `docker-compose.yaml` (сеть `gateway`)
+2. Добавить `handle /newproject/*` в `Caddyfile`
+3. Добавить объект в массив `PROJECTS` в `www/js/app.js`
+
+Изменения в Auth Gateway не требуются.
 
 ## Структура
 
 ```
 .
-├── .env.example         # шаблон конфигурации
-├── .gitignore
-├── Caddyfile            # конфиг веб-сервера
-├── docker-compose.yaml
+├── Caddyfile              # Единый Caddy Gateway
+├── DashboardCaddyfile     # Внутренний Caddyfile для Dashboard
+├── docker-compose.yaml    # Все сервисы (с profiles)
 ├── Makefile
-├── PRODUCTIVITY_PLAN.md # исходный план продуктивности
+├── .env.example
+├── docs/
+│   └── auth-architecture.md
+├── www/
+│   ├── index.html
+│   └── js/
+│       ├── app.js
+│       ├── auth.js
+│       └── word-of-day.js
 ├── scripts/
-│   └── parse_quotes.py  # парсер markdown → quotes.json
-└── www/
-    ├── index.html        # дашборд (всё в одном файле)
-    └── quotes.json       # генерируется из QUOTES_FILE (в .gitignore)
+│   └── parse_quotes.py
+├── plans/
+├── notes/
+├── journal/
+└── reading/
 ```
-
-## Функциональность
-
-| Блок | Описание |
-|---|---|
-| Расписание | Таймлайн дня с подсветкой текущего слота и маркером «сейчас» |
-| Дорожная карта Go | Три этапа (Фундамент → Бэкенд → Переход) с прогресс-барами |
-| Принципы | 5 ключевых правил с цветовой маркировкой |
-| Счётчики | Go скрипты · рабочие задачи · пропуски Duolingo · дни трекинга |
-| Цели на 30 дней | Чеклист с сохранением состояния |
-
-Счётчики и чеклист сохраняются в `localStorage` браузера — данные не теряются при перезагрузке страницы.
-
-**Управление счётчиками:** клик = +1, Shift+клик = −1.

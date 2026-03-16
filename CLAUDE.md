@@ -19,6 +19,14 @@
 ```
 /
 ├── CLAUDE.md                  # Этот файл
+├── docs/
+│   └── auth-architecture.md   # Архитектура единой аутентификации
+├── DashboardCaddyfile         # Внутренний Caddyfile для Dashboard
+├── www/
+│   └── js/
+│       ├── auth.js            # Модуль аутентификации
+│       ├── app.js             # Основной JS
+│       └── word-of-day.js     # Слово дня
 ├── plans/
 │   ├── productivity.md        # Основной план продуктивности
 │   ├── golang-learning.md     # План изучения Go
@@ -110,6 +118,13 @@
 ### При работе с журналом
 - Помогай заполнять, анализировать паттерны, замечать прогресс
 - Если энергия несколько дней подряд ниже 5 — предложи пересмотреть нагрузку, не добавлять
+
+### При работе с аутентификацией
+- Auth Gateway (ex-economicon) — отдельный проект в `../economicon/`
+- Единый docker-compose запускает всё: `make up` (core) или `make up-all` (все проекты)
+- JWT хранится в HttpOnly cookie `auth_token` — не в localStorage
+- Роли: `admin` (полный доступ + админка), `user` (только Dashboard + проекты)
+- Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` от Caddy forward_auth
 
 ### При работе с чтением и reading/list.md
 - Трекер прогресса — `reading/list.md`: статус (⬜/🔄/✅), страница, журнал дат
