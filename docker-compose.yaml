@@ -29,9 +29,9 @@ services:
       - ./DashboardCaddyfile:/etc/caddy/Caddyfile:ro
     networks: [gateway]
 
-  # -- Auth Gateway Backend (ex-economicon) --
+  # -- Auth Gateway Backend --
   auth-gateway:
-    build: ../economicon/backend
+    build: ../Auth-Gateway/backend
     container_name: auth-gateway
     restart: unless-stopped
     environment:
@@ -54,7 +54,7 @@ services:
 
   # -- Auth Gateway Frontend (admin panel) --
   auth-admin:
-    build: ../economicon/frontend
+    build: ../Auth-Gateway/frontend
     container_name: auth-admin
     restart: unless-stopped
     networks: [gateway]
@@ -71,7 +71,7 @@ services:
       MYSQL_PASSWORD: ${AUTH_DB_PASSWORD:-secret}
     volumes:
       - auth_data:/var/lib/mysql
-      - ../economicon/backend/migrations:/docker-entrypoint-initdb.d:ro
+      - ../Auth-Gateway/backend/migrations:/docker-entrypoint-initdb.d:ro
     networks: [auth-internal]
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]

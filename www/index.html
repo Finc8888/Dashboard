@@ -339,6 +339,29 @@
       </div>
     </div>
 
+    <!-- Productivity Stats -->
+    <div class="card productivity-card">
+      <div class="card-title-row">
+        <span class="card-title">📈 Статистика продуктивности</span>
+        <div class="prod-period-tabs">
+          <button class="prod-tab active" data-period="week" onclick="setProdPeriod('week')">Неделя</button>
+          <button class="prod-tab" data-period="month" onclick="setProdPeriod('month')">Месяц</button>
+          <button class="prod-tab" data-period="year" onclick="setProdPeriod('year')">Год</button>
+        </div>
+      </div>
+
+      <!-- Today summary -->
+      <div class="prod-today" id="prod-today"></div>
+
+      <!-- Chart -->
+      <div class="prod-chart-wrap">
+        <canvas id="prod-chart" height="180"></canvas>
+      </div>
+
+      <!-- Day details (shown on bar click) -->
+      <div class="prod-day-detail" id="prod-day-detail" style="display:none"></div>
+    </div>
+
     <!-- Stats -->
     <div class="stats">
       <div class="stat">
@@ -353,16 +376,45 @@
         <div class="stat-value" style="color:var(--green)" id="stat-duo">0</div>
         <div class="stat-label">Duolingo пропусков / 2 макс</div>
       </div>
-      <div class="stat">
-        <div class="stat-value" style="color:var(--purple)" id="stat-journal">0</div>
-        <div class="stat-label">Дней трекинга / 20</div>
+      <div class="stat stat-early" id="stat-early-block">
+        <div class="stat-value" style="color:var(--purple)" id="stat-early">0</div>
+        <div class="stat-label" id="stat-early-label">Ранний старт / 0</div>
+        <div class="stat-sub" id="stat-early-sub"></div>
       </div>
     </div>
 
-    <!-- 30-day goals -->
+    <!-- Monthly goals -->
     <div class="card">
-      <div class="card-title">Цели на первые 30 дней</div>
-      <div class="goals-list" id="goals"></div>
+      <div class="card-title-row">
+        <span class="card-title" id="monthly-goals-title"></span>
+        <div class="goals-header-actions">
+          <button class="goals-archive-btn" id="monthly-archive-btn" onclick="toggleMonthlyArchive()">📋 Архив</button>
+        </div>
+      </div>
+      <div class="goals-input-row">
+        <input class="goals-input" id="monthly-goal-input" type="text" placeholder="Добавить цель на месяц…" maxlength="200" />
+        <button class="goals-add-btn" id="monthly-goal-add" title="Добавить">+</button>
+      </div>
+      <div class="goals-progress-row" id="monthly-goals-progress"></div>
+      <div class="goals-list" id="monthly-goals"></div>
+      <div class="goals-archive-panel" id="monthly-archive-panel" style="display:none"></div>
+    </div>
+
+    <!-- Yearly goals -->
+    <div class="card">
+      <div class="card-title-row">
+        <span class="card-title" id="yearly-goals-title"></span>
+        <div class="goals-header-actions">
+          <button class="goals-archive-btn" id="yearly-archive-btn" onclick="toggleYearlyArchive()">📋 Архив</button>
+        </div>
+      </div>
+      <div class="goals-input-row">
+        <input class="goals-input" id="yearly-goal-input" type="text" placeholder="Добавить цель на год…" maxlength="200" />
+        <button class="goals-add-btn" id="yearly-goal-add" title="Добавить">+</button>
+      </div>
+      <div class="goals-progress-row" id="yearly-goals-progress"></div>
+      <div class="goals-list" id="yearly-goals"></div>
+      <div class="goals-archive-panel" id="yearly-archive-panel" style="display:none"></div>
     </div>
 
     <!-- Список чтения -->

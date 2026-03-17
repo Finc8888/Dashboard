@@ -6,7 +6,7 @@
 
 ## 1. Обзор
 
-Проект **economicon** переименовывается в **Auth Gateway** и становится центральным сервисом аутентификации и управления пользователями.
+Проект **Auth Gateway** становится центральным сервисом аутентификации и управления пользователями.
 **Dashboard** (Productivity) — главная точка входа: регистрация, логин, навигация по проектам.
 
 ### Текущие проекты
@@ -14,7 +14,7 @@
 | Проект | Стек | Порт (внешний) | Доступ |
 |--------|------|----------------|--------|
 | **Dashboard** | Caddy + static | `8080` | `http://localhost:8080` |
-| **Auth Gateway** (ex-economicon) | Go + MySQL + Caddy | `8888` | `http://localhost:8888/api` |
+| **Auth Gateway** | Go + MySQL + Caddy | `8888` | `http://localhost:8888/api` |
 | **Gladys Blog** | Hugo + Nginx | — | `https://gladys-blog.local.net` |
 | **Job Statistics** | Go + React + MySQL | `3000` | `http://localhost:3000` |
 
@@ -343,9 +343,9 @@ services:
     networks: [gateway]
     depends_on: [auth-gateway, dashboard]
 
-  # ── Auth Gateway (ex-economicon) ──
+  # ── Auth Gateway ──
   auth-gateway:
-    build: ../economicon/backend
+    build: ../Auth-Gateway/backend
     environment:
       DB_HOST: auth-db
       JWT_SECRET: ${JWT_SECRET}
@@ -468,7 +468,7 @@ flowchart TB
 
 ---
 
-## 13. Что нужно реализовать в Auth Gateway (ex-economicon)
+## 13. Что нужно реализовать в Auth Gateway
 
 ### Бэкенд (Go)
 
@@ -561,7 +561,7 @@ gantt
 | Auth endpoints (register, login, verify, logout, me) | ✅ Готово | `internal/handlers/auth.go` |
 | Auth middleware (RequireAuth, RequireRole) | ✅ Готово | `internal/middleware/middleware.go` |
 | Admin endpoints (CRUD, roles, audit) | ✅ Готово | `internal/handlers/admin.go` |
-| Admin Panel UI (login, users, audit, stats) | ✅ Готово | `economicon/frontend/` |
+| Admin Panel UI (login, users, audit, stats) | ✅ Готово | `Auth-Gateway/frontend/` |
 | Dashboard: auth overlay (login/register) | ✅ Готово | `www/js/auth.js` |
 | Dashboard: user badge + logout | ✅ Готово | header user-badge |
 | Unified Caddyfile (forward_auth routing) | ✅ Готово | `Caddyfile` |

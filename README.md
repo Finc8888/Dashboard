@@ -5,7 +5,7 @@
 ## Обзор
 
 - **Dashboard** — визуализация расписания, прогресса Go, целей, счётчиков
-- **Auth Gateway** (ex-economicon) — централизованная аутентификация (JWT, RBAC)
+- **Auth Gateway** — централизованная аутентификация (JWT, RBAC)
 - **Project Hub** — все проекты доступны через единый Caddy Gateway
 
 ## Быстрый старт
@@ -85,18 +85,25 @@ make clean       # Остановить + удалить volumes
 ├── docker-compose.yaml    # Все сервисы (с profiles)
 ├── Makefile
 ├── .env.example
+├── CLAUDE.md              # Инструкции для AI-ассистента
+├── ARCHITECTURE.md        # Полная архитектура (C4, localStorage, компоненты)
+├── PRODUCTIVITY_PLAN.md   # План продуктивности, расписание, методики
 ├── docs/
-│   └── auth-architecture.md
+│   ├── auth-architecture.md
+│   └── MICROSERVICES_MIGRATION.md
 ├── www/
-│   ├── index.html
+│   ├── index.html         # SPA Dashboard
+│   ├── blog-wrapper.html  # iframe-обёртка для блога
+│   ├── css/style.css      # Стили
 │   └── js/
-│       ├── app.js
-│       ├── auth.js
-│       └── word-of-day.js
+│       ├── app.js         # Виджеты, TODO, цели, статистика, чтение
+│       ├── auth.js        # Аутентификация
+│       └── word-of-day.js # Слово дня
 ├── scripts/
 │   └── parse_quotes.py
 ├── plans/
 ├── notes/
 ├── journal/
 └── reading/
+    └── list.md            # Список чтения с содержанием сборников/трилогий
 ```

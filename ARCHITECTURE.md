@@ -276,18 +276,33 @@ mindmap
       Current task marker
       Carry-over badges
       History panel
-    Goals (30-day)
-      7 checkable goals
+    Monthly Goals
+      Add / Edit / Delete
+      Auto carry-over
+      Recurring goals (early start)
+      Progress bar + %
+      Archive by month
+    Yearly Goals
+      Add / Edit / Delete
+      Auto carry-over
+      Progress bar + %
+      Archive by year
+    Productivity Stats
+      Today: ring chart + metrics
+      Streak days
+      Week/Month/Year chart (canvas)
+      Day detail on click
     Stats
       Go scripts counter
       Tasks counter
       Duolingo misses
-      Journal days
+      Early Start tracker (7:00–8:00)
     Reading List
       10 books tracker
       Status: waiting/reading/done
       Page tracking
       Progress bar
+      Expandable sub-items (сборники/трилогии)
     Quote Banner
       Hourly rotation
       Shuffle
@@ -306,12 +321,14 @@ mindmap
 | `prod_notif_enabled` | `"0"\|"1"` | Уведомления вкл/выкл |
 | `prod_tasks_v1` | `[{id, text, done, current, ...}]` | Задачи |
 | `prod_history_v1` | `[{id, text, addedAt, doneAt, workedMs}]` | История задач |
-| `prod_goals_v1` | `{goalId: boolean}` | Чекбоксы целей |
+| `prod_monthly_goals_v2` | `{monthKey: [{id, text, icon, done, recurring?, carriedFrom?}]}` | Цели на месяц (по ключу YYYY-MM) |
+| `prod_yearly_goals_v2` | `{yearKey: [{id, text, icon, done, recurring?, carriedFrom?}]}` | Цели на год (по ключу YYYY) |
+| `prod_daily_snapshot_v1` | `{dateStr: {completed, remaining, totalMs, ...}}` | Снимки продуктивности по дням |
+| `prod_early_start_v1` | `{monthKey: {dateStr: {time, success}}}` | Трекер раннего старта 7:00–8:00 |
 | `prod_stat_go` | `number` | Счётчик Go-скриптов |
 | `prod_stat_tasks` | `number` | Счётчик рабочих задач |
 | `prod_stat_duo` | `number` | Пропуски Duolingo |
-| `prod_stat_journal` | `number` | Дни журнала |
-| `prod_reading_v1` | `{bookId: {status, page, startedAt}}` | Прогресс чтения |
+| `prod_reading_v1` | `{bookId: {status, page, startedAt}}` | Прогресс чтения (включая sub-items сборников/трилогий) |
 | `prod_running_v1` | `{distId: [{secs, date, addedAt}]}` | Результаты бега |
 | `prod_wod_cache` | `{word, wordRu, ...}` | Кэш слова дня |
 | `prod_wod_archive_v1` | `[{word, date, ...}]` | Архив слов (90 дней) |
@@ -382,8 +399,8 @@ flowchart TB
     subgraph Core["Core (всегда запущены)"]
         GW["gateway<br/>caddy:2-alpine<br/>:80, :443"]
         DASH["dashboard<br/>caddy:2-alpine<br/>:80 internal"]
-        AUTH["auth-gateway<br/>Build: economicon/backend<br/>:8080"]
-        AUTH_UI["auth-admin<br/>Build: economicon/frontend<br/>:80 internal"]
+        AUTH["auth-gateway<br/>Build: Auth-Gateway/backend<br/>:8080"]
+        AUTH_UI["auth-admin<br/>Build: Auth-Gateway/frontend<br/>:80 internal"]
         AUTH_DB["auth-db<br/>mysql:8.0<br/>:3306 internal"]
     end
 
@@ -558,7 +575,7 @@ status      # Show status of all services
 flowchart TB
     PROD["Productivity<br/>(оркестратор)"]
 
-    ECON["economicon<br/>(Auth Gateway)"]
+    ECON["Auth-Gateway<br/>(Auth Gateway)"]
     BLOG["Gladys-Blog"]
     JOBS["job-statistics-platform"]
 
@@ -578,7 +595,7 @@ flowchart TB
 ```
 
 **Ключевые связи:**
-- **Productivity → economicon:** JWT-аутентификация через HttpOnly cookie
+- **Productivity → Auth-Gateway:** JWT-аутентификация через HttpOnly cookie
 - **Productivity → Gladys-Blog:** iframe + TLS-проксирование (skip verify)
 - **Productivity → job-statistics-platform:** URI strip prefix, external volume для сохранения данных
 - **Все подпроекты → Productivity:** Обнаружение gateway-режима по `window.location.pathname`
