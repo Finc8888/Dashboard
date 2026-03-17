@@ -1560,6 +1560,7 @@ renderRunning();
 
 // ── Productivity Stats ───────────────────────────────────────────────────
 const PROD_DAILY_KEY = 'prod_daily_snapshot_v1';
+const MAX_TASK_IN_DAY = 10;
 let currentProdPeriod = 'week';
 
 function loadDailySnapshots() {
@@ -1601,7 +1602,7 @@ function calcProductivity(completed, remaining) {
   let total = completed + remaining;
   if (total === 0) return 0;
   // Max count of task for day is 10
-  total = total > 10 ? 10 : total;
+  total = total > MAX_TASK_IN_DAY ? MAX_TASK_IN_DAY : total;
 
   return Math.round((completed / total) * 100);
 }
