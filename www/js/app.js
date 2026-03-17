@@ -1603,7 +1603,6 @@ function calcProductivity(completed, remaining) {
   // Max count of task for day is 10
   total = total > 10 ? 10 : total;
 
-  console.log('total', total)
   return Math.round((completed / total) * 100);
 }
 
