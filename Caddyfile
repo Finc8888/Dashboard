@@ -12,13 +12,21 @@
         reverse_proxy auth-gateway:8080
     }
 
-    # -- Admin API (protected by backend middleware) --
+    # -- Admin API (protected by forward_auth + backend middleware) --
     handle /api/admin/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         reverse_proxy auth-gateway:8080
     }
 
     # -- Admin Panel UI --
     handle /admin/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         uri strip_prefix /admin
         reverse_proxy auth-admin:80
     }
@@ -31,12 +39,20 @@
         redir /blog/ permanent
     }
     handle /blog/ {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         root * /srv/www
         rewrite * /blog-wrapper.html
         file_server
     }
     # -- Blog raw content (inside iframe) --
     handle /blog-raw/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         uri strip_prefix /blog-raw
         reverse_proxy gladys-blog:443 {
             transport http {
@@ -50,15 +66,52 @@
 
     # -- Job Statistics --
     handle /jobs/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         uri strip_prefix /jobs
         reverse_proxy job-stats-api:8081
     }
     handle /jobs/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
         uri strip_prefix /jobs
         reverse_proxy job-stats-frontend:3000
     }
     handle /jobs {
         redir /jobs/ permanent
+    }
+
+    # -- Gladys Chat --
+    handle /chat/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /chat
+        reverse_proxy gladys-chat-api:8082
+    }
+    handle /chat/ws {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /chat
+        reverse_proxy gladys-chat-api:8082
+    }
+    handle /chat/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /chat
+        reverse_proxy gladys-chat-frontend:80
+    }
+    handle /chat {
+        redir /chat/ permanent
     }
 
     # -- Dashboard (default) --

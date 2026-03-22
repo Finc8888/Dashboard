@@ -2,4 +2,16 @@
     root * /srv/www
     file_server
     encode gzip
+
+    handle /data/training_schedule.csv {
+        root * /srv/5run
+        rewrite * /training_schedule.csv
+        file_server
+    }
+
+    handle /data/records_sorted.csv {
+        root * /srv/5run
+        rewrite * /records_sorted.csv
+        file_server
+    }
 }

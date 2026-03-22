@@ -14,6 +14,39 @@
 
 <div id="main-content">
 
+<!-- Morning Briefing -->
+<div class="briefing-overlay" id="briefing-overlay" style="display:none">
+  <div class="briefing-card" id="briefing-card"></div>
+</div>
+
+<!-- Weekly Retrospective -->
+<div class="retro-overlay" id="retro-overlay" style="display:none">
+  <div class="retro-card" id="retro-card"></div>
+</div>
+
+<!-- Shortcuts Help -->
+<div class="shortcuts-overlay" id="shortcuts-overlay" style="display:none">
+  <div class="shortcuts-modal">
+    <div class="shortcuts-header">
+      <span>Клавиатурные шорткаты</span>
+      <button class="shortcuts-close" onclick="toggleShortcutsHelp()">✕</button>
+    </div>
+    <div class="shortcuts-list">
+      <div class="shortcuts-row"><kbd>N</kbd><span>Новая задача</span></div>
+      <div class="shortcuts-row"><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd><span>Фокус на виджет (по порядку)</span></div>
+      <div class="shortcuts-row"><kbd>Space</kbd><span>Завершить текущую задачу</span></div>
+      <div class="shortcuts-row"><kbd>F</kbd><span>Фокус-режим</span></div>
+      <div class="shortcuts-row"><kbd>D</kbd><span>Отвлёкся (лог)</span></div>
+      <div class="shortcuts-row"><kbd>A</kbd><span>Админ-панель</span></div>
+      <div class="shortcuts-row"><kbd>W</kbd><span>Настройки виджетов</span></div>
+      <div class="shortcuts-row"><kbd>Esc</kbd><span>Закрыть модальное окно</span></div>
+      <div class="shortcuts-row"><kbd>Home</kbd><span>В начало страницы</span></div>
+      <div class="shortcuts-row"><kbd>End</kbd><span>В конец страницы</span></div>
+      <div class="shortcuts-row"><kbd>?</kbd><span>Эта подсказка</span></div>
+    </div>
+  </div>
+</div>
+
 <header>
   <div>
     <h1>Productivity Dashboard</h1>
@@ -24,6 +57,7 @@
       <span id="notif-icon">🔔</span>
       <span class="notif-label" id="notif-label">уведомления</span>
     </button>
+    <button class="zen-btn" id="zen-btn" onclick="toggleZenMode()" title="Фокус-режим (F)">🎯</button>
     <div id="live-clock">00:00</div>
     <div class="user-badge" id="user-badge" style="display:none"></div>
   </div>
@@ -35,8 +69,16 @@
   <div class="projects-nav-list" id="projects-nav-list"></div>
 </nav>
 
+<!-- Widget empty state -->
+<div class="widgets-empty" id="widgets-empty" style="display:none">
+  <button class="widgets-empty-btn" onclick="openWidgetSettings()">
+    <span class="widgets-empty-icon">+</span>
+    <span class="widgets-empty-text">Добавить виджеты</span>
+  </button>
+</div>
+
 <!-- Цитата из файла -->
-<div id="quote-banner">
+<div id="quote-banner" data-widget="quote">
   <div class="quote-icon">💬</div>
   <div class="quote-body">
     <div class="quote-text" id="quote-text"></div>
@@ -49,7 +91,7 @@
 </div>
 
 <!-- Личные виджеты -->
-<div class="personal-bar">
+<div class="personal-bar" data-widget="personal-bar">
   <div class="widget">
     <div class="widget-icon">🧘</div>
     <div class="widget-body">
@@ -133,7 +175,7 @@
 </div>
 
 <!-- Running Progress -->
-<div class="running-section">
+<div class="running-section" data-widget="running">
   <div class="running-inner">
     <div class="running-left">
       <svg class="running-figure" width="52" height="68" viewBox="0 0 52 68" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -146,12 +188,15 @@
       </svg>
       <div class="running-section-title">Прогресс<br/>в беге</div>
     </div>
-    <div class="running-grid" id="running-grid"></div>
+    <div class="running-right">
+      <div id="training-today"></div>
+      <div class="running-grid" id="running-grid"></div>
+    </div>
   </div>
 </div>
 
 <!-- Слово дня -->
-<section class="wod-section" id="wod-section">
+<section class="wod-section" id="wod-section" data-widget="wod">
   <div class="wod-inner">
 
     <div class="wod-header-row">
@@ -215,13 +260,13 @@
 <div class="grid">
 
   <!-- Расписание -->
-  <div class="card schedule">
+  <div class="card schedule" data-widget="schedule">
     <div class="card-title">Ежедневный распорядок</div>
     <div class="timeline" id="timeline"></div>
   </div>
 
   <!-- TODO -->
-  <div class="card todo-card">
+  <div class="card todo-card" data-widget="todo">
     <div class="card-title-row">
       <span class="card-title">TODO сегодня</span>
       <span class="todo-progress-text">
@@ -248,7 +293,7 @@
   </div>
 
   <!-- Принципы -->
-  <div class="card">
+  <div class="card" data-widget="principles">
     <div class="card-title">Ключевые принципы</div>
     <div class="principles">
       <div class="principle p-red">
@@ -292,55 +337,23 @@
   <!-- Нижняя полоса -->
   <div class="full-width">
 
-    <!-- Go Roadmap -->
-    <div class="card">
-      <div class="card-title">Дорожная карта Golang</div>
-      <div class="stages">
-        <div class="stage">
-          <div class="stage-head">
-            <span class="stage-title">🟦 Этап 1 — Фундамент</span>
-            <span class="stage-weeks">Недели 1–4</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div>
-          <div class="stage-topics">
-            <span class="tag">Синтаксис & типы</span>
-            <span class="tag">Структуры & интерфейсы</span>
-            <span class="tag">Горутины & каналы</span>
-            <span class="tag">Модули & пакеты</span>
-          </div>
-        </div>
-        <div class="stage">
-          <div class="stage-head">
-            <span class="stage-title">🟩 Этап 2 — Бэкенд</span>
-            <span class="stage-weeks">Недели 5–10</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div>
-          <div class="stage-topics">
-            <span class="tag">net/http</span>
-            <span class="tag">database/sql</span>
-            <span class="tag">DDD-пакеты</span>
-            <span class="tag">testing</span>
-            <span class="tag">Middleware & DI</span>
-          </div>
-        </div>
-        <div class="stage">
-          <div class="stage-head">
-            <span class="stage-title">🟨 Этап 3 — Переход</span>
-            <span class="stage-weeks">Недели 11–16</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--yellow)"></div></div>
-          <div class="stage-topics">
-            <span class="tag">Микросервис</span>
-            <span class="tag">CI/CD</span>
-            <span class="tag">Gin / Echo / Chi</span>
-            <span class="tag">DDD в Go</span>
-          </div>
-        </div>
+    <!-- Go Roadmap (interactive) -->
+    <div class="card go-roadmap-card" data-widget="go-roadmap">
+      <div class="card-title-row">
+        <span class="card-title">📗 Прогресс в Go</span>
+        <span class="go-progress-summary" id="go-progress-summary"></span>
       </div>
+      <div class="go-tabs">
+        <button class="go-tab active" data-tab="lessons" onclick="setGoTab('lessons')">Syncthing уроки</button>
+        <button class="go-tab" data-tab="tour" onclick="setGoTab('tour')">Go Tour</button>
+        <button class="go-tab" data-tab="code" onclick="setGoTab('code')">Изучение кода</button>
+        <button class="go-tab" data-tab="books" onclick="setGoTab('books')">Ресурсы</button>
+      </div>
+      <div id="go-tab-content"></div>
     </div>
 
     <!-- Productivity Stats -->
-    <div class="card productivity-card">
+    <div class="card productivity-card" data-widget="productivity">
       <div class="card-title-row">
         <span class="card-title">📈 Статистика продуктивности</span>
         <div class="prod-period-tabs">
@@ -363,7 +376,7 @@
     </div>
 
     <!-- Stats -->
-    <div class="stats">
+    <div class="stats" data-widget="stats">
       <div class="stat">
         <div class="stat-value" style="color:var(--blue)" id="stat-go">0</div>
         <div class="stat-label">Go скриптов / 30</div>
@@ -381,10 +394,17 @@
         <div class="stat-label" id="stat-early-label">Ранний старт / 0</div>
         <div class="stat-sub" id="stat-early-sub"></div>
       </div>
+      <div class="stat stat-distraction" id="stat-distraction-block">
+        <div class="stat-value" style="color:var(--red)" id="stat-distraction-count">0</div>
+        <div class="stat-label">Отвлечений сегодня</div>
+        <button class="distraction-log-btn" id="distraction-log-btn" onclick="toggleDistractionPanel()">🚫 Отвлёкся</button>
+        <div class="distraction-panel" id="distraction-panel" style="display:none"></div>
+        <div class="distraction-weekly" id="distraction-weekly"></div>
+      </div>
     </div>
 
     <!-- Monthly goals -->
-    <div class="card">
+    <div class="card" data-widget="monthly-goals">
       <div class="card-title-row">
         <span class="card-title" id="monthly-goals-title"></span>
         <div class="goals-header-actions">
@@ -401,7 +421,7 @@
     </div>
 
     <!-- Yearly goals -->
-    <div class="card">
+    <div class="card" data-widget="yearly-goals">
       <div class="card-title-row">
         <span class="card-title" id="yearly-goals-title"></span>
         <div class="goals-header-actions">
@@ -418,17 +438,35 @@
     </div>
 
     <!-- Список чтения -->
-    <div class="card">
+    <div class="card" data-widget="reading">
       <div class="card-title-row">
-        <span class="card-title">📚 Список чтения · 21:15–22:30</span>
-        <span class="reading-summary" id="reading-summary">
-          <span id="reading-done-count">0</span> / 10 книг
-        </span>
+        <span class="card-title">📚 Список чтения</span>
+        <div class="reading-header-actions">
+          <span class="reading-summary" id="reading-summary">
+            <span id="reading-done-count">0</span> / <span id="reading-total-count">0</span> книг
+          </span>
+          <button class="reading-action-btn" onclick="toggleReadingEditMode()" title="Редактировать список">✎</button>
+          <button class="reading-action-btn reading-clear-btn" onclick="clearReadingList()" title="Очистить список">🗑</button>
+        </div>
       </div>
       <div class="reading-progress-bar">
         <div class="reading-progress-fill" id="reading-progress-fill"></div>
       </div>
       <div class="reading-books" id="reading-books"></div>
+    </div>
+
+    <!-- Scratchpad -->
+    <div class="card scratchpad-card" data-widget="scratchpad">
+      <div class="card-title-row">
+        <span class="card-title">📝 Быстрые заметки</span>
+        <div class="scratchpad-actions">
+          <button class="scratchpad-btn" onclick="scratchpadToTask()" title="Превратить в задачу">→ в задачу</button>
+          <button class="scratchpad-btn" onclick="toggleScratchpadHistory()">📋 История</button>
+        </div>
+      </div>
+      <textarea class="scratchpad-textarea" id="scratchpad-textarea" placeholder="Мысли, идеи, заметки…" rows="10"></textarea>
+      <div class="scratchpad-status" id="scratchpad-status"></div>
+      <div class="scratchpad-history" id="scratchpad-history" style="display:none"></div>
     </div>
 
   </div>
@@ -448,6 +486,8 @@
 </div><!-- /main-content -->
 
 <script src="js/auth.js"></script>
+<script src="js/go-data.js"></script>
+<script src="js/training-data.js"></script>
 <script src="js/app.js"></script>
 <script src="js/word-of-day.js"></script>
 <script>initAuth();</script>

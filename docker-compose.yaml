@@ -27,6 +27,8 @@ services:
     volumes:
       - ./www:/srv/www:ro
       - ./DashboardCaddyfile:/etc/caddy/Caddyfile:ro
+      - ${TRAINING_SCHEDULE_CSV}:/srv/5run/training_schedule.csv:ro
+      - ${RECORDS_CSV}:/srv/5run/records_sorted.csv:ro
     networks: [gateway]
 
   # -- Auth Gateway Backend --
@@ -134,15 +136,67 @@ services:
       retries: 10
     profiles: ["jobs"]
 
+  # -- Gladys Chat Frontend --
+  gladys-chat-frontend:
+    build: ../Gladys-Chat/frontend
+    container_name: gladys-chat-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["chat"]
+
+  # -- Gladys Chat API --
+  gladys-chat-api:
+    build: ../Gladys-Chat/backend
+    container_name: gladys-chat-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: gladys-chat-db
+      DB_PORT: "3306"
+      DB_USER: ${CHAT_DB_USER:-gladys}
+      DB_PASSWORD: ${CHAT_DB_PASSWORD:-gladyspassword}
+      DB_NAME: ${CHAT_DB_NAME:-gladys_chat}
+      API_PORT: "8082"
+    networks: [gateway, chat-internal]
+    depends_on:
+      gladys-chat-db:
+        condition: service_healthy
+    profiles: ["chat"]
+
+  # -- Gladys Chat DB --
+  gladys-chat-db:
+    image: mysql:8.0
+    container_name: gladys-chat-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CHAT_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${CHAT_DB_NAME:-gladys_chat}
+      MYSQL_USER: ${CHAT_DB_USER:-gladys}
+      MYSQL_PASSWORD: ${CHAT_DB_PASSWORD:-gladyspassword}
+    volumes:
+      - chat_data:/var/lib/mysql
+      - ../Gladys-Chat/backend/migrations/001_create_tables.sql:/docker-entrypoint-initdb.d/001_create_tables.sql:ro
+      - ../Gladys-Chat/backend/migrations/002_centralize_auth.sql:/docker-entrypoint-initdb.d/002_centralize_auth.sql:ro
+    networks: [chat-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["chat"]
+
 networks:
   gateway:
+    name: productivity_gateway
   auth-internal:
   jobs-internal:
+  chat-internal:
+    name: productivity_chat-internal
 
 volumes:
   caddy_data:
   caddy_config:
   auth_data:
+  chat_data:
   jobs_data:
     external: true
     name: job-statistics-platform_mysql_data

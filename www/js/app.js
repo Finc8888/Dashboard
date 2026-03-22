@@ -19,6 +19,304 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   };
 }
 
+// ── Widget Settings ──────────────────────────────────────────────────────
+function hasPermission(perm) {
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!user) return false;
+  return Array.isArray(user.permissions) && user.permissions.includes(perm);
+}
+
+function canEditWidgets() {
+  return hasPermission('widget_settings');
+}
+
+const WIDGET_DEFS = [
+  { id: 'quote',         label: 'Цитата из бесед Аристотеля' },
+  { id: 'personal-bar',  label: 'Дни / Подушка / Ипотека' },
+  { id: 'running',       label: 'Прогресс в беге' },
+  { id: 'wod',           label: 'Слово дня' },
+  { id: 'schedule',      label: 'Ежедневный распорядок' },
+  { id: 'todo',          label: 'TODO список' },
+  { id: 'principles',    label: 'Ключевые принципы' },
+  { id: 'go-roadmap',    label: 'Прогресс в Go' },
+  { id: 'productivity',  label: 'Статистика продуктивности' },
+  { id: 'stats',         label: 'Отвлечения / Duolingo / Ранний старт' },
+  { id: 'monthly-goals', label: 'Цели на месяц' },
+  { id: 'yearly-goals',  label: 'Цели на год' },
+  { id: 'reading',       label: 'Список чтения' },
+  { id: 'scratchpad',    label: 'Быстрые заметки' },
+];
+const DEFAULT_WIDGET_ORDER = WIDGET_DEFS.map(w => w.id);
+
+function widgetSettingsKey() {
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  const uid = user ? user.username || user.email || 'default' : 'default';
+  return 'prod_widgets_' + uid;
+}
+
+function loadWidgetSettings() {
+  try {
+    const raw = localStorage.getItem(widgetSettingsKey());
+    if (!raw) return null; // new user — no settings yet
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveWidgetSettings(cfg) {
+  localStorage.setItem(widgetSettingsKey(), JSON.stringify(cfg));
+}
+
+function getWidgetConfig() {
+  const saved = loadWidgetSettings();
+  if (!saved) return null;
+  // Merge: add any new widgets not in saved order
+  const order = [...(saved.order || [])];
+  const visible = { ...(saved.visible || {}) };
+  for (const w of DEFAULT_WIDGET_ORDER) {
+    if (!order.includes(w)) { order.push(w); visible[w] = false; }
+  }
+  return { order, visible };
+}
+
+function applyWidgetVisibility() {
+  const cfg = getWidgetConfig();
+  const emptyEl = document.getElementById('widgets-empty');
+  const canEdit = canEditWidgets();
+
+  // Check if user has dashboard permission
+  if (!hasPermission('dashboard')) {
+    // Hide all widgets
+    document.querySelectorAll('[data-widget]').forEach(el => {
+      el.style.display = 'none';
+    });
+    if (emptyEl) emptyEl.style.display = 'none';
+    // Show blocked message
+    let blockedEl = document.getElementById('dashboard-blocked');
+    if (!blockedEl) {
+      blockedEl = document.createElement('div');
+      blockedEl.id = 'dashboard-blocked';
+      blockedEl.className = 'dashboard-blocked';
+      blockedEl.innerHTML = `
+        <div class="dashboard-blocked-icon">🔒</div>
+        <h2>Доступ к виджетам заблокирован</h2>
+        <p>Администратор ограничил доступ к Dashboard.<br>Обратитесь к администратору для получения доступа.</p>
+      `;
+      const mainContent = document.getElementById('main-content');
+      const grid = mainContent.querySelector('.grid');
+      if (grid) mainContent.insertBefore(blockedEl, grid);
+      else mainContent.appendChild(blockedEl);
+    }
+    blockedEl.style.display = '';
+    return;
+  }
+
+  // Remove blocked message if present
+  const blockedEl = document.getElementById('dashboard-blocked');
+  if (blockedEl) blockedEl.remove();
+
+  if (!cfg) {
+    // New user — show only TODO, hide rest
+    document.querySelectorAll('[data-widget]').forEach(el => {
+      el.style.display = el.getAttribute('data-widget') === 'todo' ? '' : 'none';
+    });
+    // Show "add widgets" button only if user has permission
+    if (emptyEl) emptyEl.style.display = canEdit ? '' : 'none';
+    return;
+  }
+
+  let anyVisible = false;
+  document.querySelectorAll('[data-widget]').forEach(el => {
+    const id = el.getAttribute('data-widget');
+    const show = cfg.visible[id] !== false;
+    el.style.display = show ? '' : 'none';
+    if (show) anyVisible = true;
+  });
+
+  // Reorder widgets according to cfg.order
+  reorderWidgets(cfg.order);
+
+  if (emptyEl) emptyEl.style.display = (!anyVisible && canEdit) ? '' : 'none';
+}
+
+function reorderWidgets(order) {
+  // Top-level widgets (outside .grid): quote, personal-bar, running, wod
+  const mainContent = document.getElementById('main-content');
+  if (!mainContent) return;
+
+  const topIds = ['quote', 'personal-bar', 'running', 'wod'];
+  const gridIds = ['schedule', 'todo', 'principles'];
+  const fullWidthIds = ['go-roadmap', 'productivity', 'stats', 'monthly-goals', 'yearly-goals', 'reading', 'scratchpad'];
+
+  // Reorder top-level widgets
+  const grid = mainContent.querySelector('.grid');
+  const orderedTop = order.filter(id => topIds.includes(id));
+  for (const id of orderedTop) {
+    const el = mainContent.querySelector(`[data-widget="${id}"]`);
+    if (el && grid) mainContent.insertBefore(el, grid);
+  }
+
+  // Reorder cards inside .grid (top-level cards before full-width)
+  if (grid) {
+    const fullWidthDiv = grid.querySelector('.full-width');
+    const orderedGrid = order.filter(id => gridIds.includes(id));
+    for (const id of orderedGrid) {
+      const el = grid.querySelector(`[data-widget="${id}"]`);
+      if (el && fullWidthDiv) grid.insertBefore(el, fullWidthDiv);
+    }
+
+    // Reorder inside .full-width
+    if (fullWidthDiv) {
+      const orderedFw = order.filter(id => fullWidthIds.includes(id));
+      for (const id of orderedFw) {
+        const el = fullWidthDiv.querySelector(`[data-widget="${id}"]`);
+        if (el) fullWidthDiv.appendChild(el);
+      }
+    }
+  }
+}
+
+// ── Widget Settings Panel ────────────────────────────────────────────────
+let _wsDragItem = null;
+
+function openWidgetSettings() {
+  closeWidgetSettings();
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  const canEdit = canEditWidgets();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'widget-settings-overlay';
+  overlay.className = 'ws-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) closeWidgetSettings(); };
+
+  const userInfoHtml = user ? `<div class="ws-user-info">
+    <span class="ws-user-name">${user.username}</span>
+    <span class="ws-user-role">${user.role}</span>
+    ${user.email ? `<span class="ws-user-email">${user.email}</span>` : ''}
+  </div>` : '';
+
+  if (!canEdit) {
+    // View-only: just show user info
+    overlay.innerHTML = `
+      <div class="ws-panel">
+        <div class="ws-header">
+          <h3>Профиль</h3>
+          <button class="ws-close" onclick="closeWidgetSettings()">✕</button>
+        </div>
+        ${userInfoHtml}
+        <div class="ws-no-edit">Настройка виджетов недоступна.<br/>Обратитесь к администратору.</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    return;
+  }
+
+  const cfg = getWidgetConfig() || { order: [...DEFAULT_WIDGET_ORDER], visible: {} };
+
+  const items = cfg.order.map(id => {
+    const def = WIDGET_DEFS.find(w => w.id === id);
+    if (!def) return '';
+    const checked = cfg.visible[id] !== false && cfg.visible[id] !== undefined ? 'checked' : '';
+    return `<div class="ws-item" draggable="true" data-ws-id="${id}">
+      <span class="ws-drag-handle" title="Перетащить">⠿</span>
+      <label class="ws-checkbox-label">
+        <input type="checkbox" class="ws-checkbox" data-ws-check="${id}" ${checked} onchange="onWidgetCheckChange()" />
+        <span class="ws-item-label">${def.label}</span>
+      </label>
+    </div>`;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div class="ws-panel">
+      <div class="ws-header">
+        <h3>Настройки виджетов</h3>
+        <button class="ws-close" onclick="closeWidgetSettings()">✕</button>
+      </div>
+      ${userInfoHtml}
+      <div class="ws-actions">
+        <button class="ws-action-btn" onclick="wsSelectAll(true)">Выбрать все</button>
+        <button class="ws-action-btn" onclick="wsSelectAll(false)">Убрать все</button>
+      </div>
+      <div class="ws-list" id="ws-list">${items}</div>
+      <div class="ws-footer">
+        <button class="ws-save-btn" onclick="saveWidgetSettingsFromPanel()">Сохранить</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  initWsDragAndDrop();
+}
+
+function closeWidgetSettings() {
+  const el = document.getElementById('widget-settings-overlay');
+  if (el) el.remove();
+}
+
+function wsSelectAll(checked) {
+  document.querySelectorAll('.ws-checkbox').forEach(cb => { cb.checked = checked; });
+}
+
+function onWidgetCheckChange() { /* live preview could go here */ }
+
+function saveWidgetSettingsFromPanel() {
+  const list = document.getElementById('ws-list');
+  if (!list) return;
+  const order = [];
+  const visible = {};
+  list.querySelectorAll('.ws-item').forEach(item => {
+    const id = item.getAttribute('data-ws-id');
+    const cb = item.querySelector('.ws-checkbox');
+    order.push(id);
+    visible[id] = cb ? cb.checked : false;
+  });
+  saveWidgetSettings({ order, visible });
+  closeWidgetSettings();
+  applyWidgetVisibility();
+}
+
+// Drag-and-drop for reordering
+function initWsDragAndDrop() {
+  const list = document.getElementById('ws-list');
+  if (!list) return;
+
+  list.addEventListener('dragstart', (e) => {
+    const item = e.target.closest('.ws-item');
+    if (!item) return;
+    _wsDragItem = item;
+    item.classList.add('ws-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  list.addEventListener('dragend', (e) => {
+    const item = e.target.closest('.ws-item');
+    if (item) item.classList.remove('ws-dragging');
+    _wsDragItem = null;
+    list.querySelectorAll('.ws-item').forEach(el => el.classList.remove('ws-drag-over'));
+  });
+
+  list.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.ws-item');
+    if (!target || target === _wsDragItem) return;
+    list.querySelectorAll('.ws-item').forEach(el => el.classList.remove('ws-drag-over'));
+    target.classList.add('ws-drag-over');
+  });
+
+  list.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const target = e.target.closest('.ws-item');
+    if (!target || !_wsDragItem || target === _wsDragItem) return;
+    const items = [...list.querySelectorAll('.ws-item')];
+    const fromIdx = items.indexOf(_wsDragItem);
+    const toIdx = items.indexOf(target);
+    if (fromIdx < toIdx) {
+      target.after(_wsDragItem);
+    } else {
+      target.before(_wsDragItem);
+    }
+    list.querySelectorAll('.ws-item').forEach(el => el.classList.remove('ws-drag-over'));
+  });
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -70,9 +368,33 @@ const PROJECTS = [
     url:   '/jobs/',
     desc:  'Go API · React · MySQL',
   },
+  {
+    id:    'gladys-chat',
+    label: 'Gladys Chat',
+    icon:  '💬',
+    url:   '/chat/',
+    desc:  'Go · React · E2EE · WebSocket',
+  },
 ];
 
 const PROJECT_STATUS = {}; // id → 'checking' | 'online' | 'offline'
+
+const PROJECT_PERMISSIONS = {
+  'auth-admin': 'admin',
+  'gladys-blog': 'blog',
+  'job-stats': 'jobs',
+  'gladys-chat': 'chat',
+};
+
+function getVisibleProjects() {
+  const user = getCurrentUser();
+  if (!user) return [];
+  const perms = user.permissions || [];
+  return PROJECTS.filter(p => {
+    const requiredPerm = PROJECT_PERMISSIONS[p.id];
+    return !requiredPerm || perms.includes(requiredPerm);
+  });
+}
 
 async function checkProject(project) {
   PROJECT_STATUS[project.id] = 'checking';
@@ -105,7 +427,8 @@ function showProjectOfflineMsg(projectId) {
 function renderProjectsNav() {
   const list = document.getElementById('projects-nav-list');
   if (!list) return;
-  list.innerHTML = PROJECTS.map(p => {
+  const visible = getVisibleProjects();
+  list.innerHTML = visible.map(p => {
     const status = PROJECT_STATUS[p.id] || 'checking';
     const dotCls = status === 'online' ? 'proj-dot-online'
                  : status === 'offline' ? 'proj-dot-offline'
@@ -125,13 +448,18 @@ function renderProjectsNav() {
   }).join('');
 }
 
+let _projectsIntervalId = null;
+
 function initProjectsNav() {
   renderProjectsNav();
-  PROJECTS.forEach(p => checkProject(p));
-  setInterval(() => PROJECTS.forEach(p => checkProject(p)), 30000);
+  const visible = getVisibleProjects();
+  visible.forEach(p => checkProject(p));
+  if (_projectsIntervalId) clearInterval(_projectsIntervalId);
+  _projectsIntervalId = setInterval(() => {
+    const vis = getVisibleProjects();
+    vis.forEach(p => checkProject(p));
+  }, 30000);
 }
-
-initProjectsNav();
 
 // ── Days counter ──────────────────────────────────────────────────────────
 const DAYS_KEY = 'prod_days_v1';
@@ -351,27 +679,99 @@ function sendNotification(title, body) {
 updateNotifBtn();
 
 // ── Schedule ──────────────────────────────────────────────────────────────
+const SCHEDULE_LABELS_KEY = 'prod_schedule_labels_v1';
+
 const slots = [
-  { time: '07:00', end: '07:30', label: 'Подъём',                   sub: 'Вода · зарядка · завтрак без телефона', dot: 'dot-muted'  },
-  { time: '07:30', end: '09:30', label: '🔴 DEEP WORK #1',          sub: 'Рабочие задачи (2 часа)',               dot: 'dot-red'    },
-  { time: '09:30', end: '09:45', label: 'Перерыв',                  sub: 'Прогулка — не YouTube',                 dot: 'dot-muted'  },
-  { time: '09:45', end: '10:30', label: '🟡 DEEP WORK #2 — Golang', sub: '45 минут чистого Go',                  dot: 'dot-yellow' },
-  { time: '10:30', end: '12:00', label: 'Рабочие задачи',           sub: 'Средний приоритет',                    dot: 'dot-red'    },
-  { time: '12:00', end: '13:00', label: 'Обед',                     sub: 'Полноценный отдых — не работа',        dot: 'dot-muted'  },
-  { time: '13:00', end: '15:00', label: 'Рабочие задачи',           sub: 'Код-ревью · email · Jira',             dot: 'dot-red'    },
-  { time: '15:00', end: '15:15', label: 'Перерыв',                  sub: '',                                     dot: 'dot-muted'  },
-  { time: '15:15', end: '16:00', label: '🟢 Go — эксперименты',     sub: 'Рефакторинг · новые концепции',        dot: 'dot-green'  },
-  { time: '16:00', end: '18:30', label: 'Свободное время',          sub: 'YouTube разрешён в этом окне',         dot: 'dot-blue'   },
-  { time: '18:30', end: '19:00', label: 'Подготовка к бегу',        sub: 'Лёгкий перекус',                      dot: 'dot-muted'  },
-  { time: '19:00', end: '20:00', label: '🏃 Бег',                   sub: 'Вечерняя пробежка',                   dot: 'dot-cyan'   },
-  { time: '20:00', end: '21:00', label: '📱 Duolingo',              sub: 'Hard mode · не пропускать',            dot: 'dot-purple' },
-  { time: '21:00', end: '21:15', label: 'Планирование завтра',      sub: '10–15 минут · 3 выполненных дела',     dot: 'dot-muted'  },
-  { time: '21:15', end: '22:30', label: '📖 Вечернее чтение',        sub: 'По списку · бумага или e-ink',         dot: 'dot-purple' },
-  { time: '22:30', end: '23:59', label: '😴 Сон',                   sub: '',                                     dot: 'dot-muted'  },
+  { time: '07:00', end: '07:30', dot: 'dot-muted'  },
+  { time: '07:30', end: '09:30', dot: 'dot-red'    },
+  { time: '09:30', end: '09:45', dot: 'dot-muted'  },
+  { time: '09:45', end: '10:30', dot: 'dot-yellow' },
+  { time: '10:30', end: '12:00', dot: 'dot-red'    },
+  { time: '12:00', end: '13:00', dot: 'dot-muted'  },
+  { time: '13:00', end: '15:00', dot: 'dot-red'    },
+  { time: '15:00', end: '15:15', dot: 'dot-muted'  },
+  { time: '15:15', end: '16:00', dot: 'dot-green'  },
+  { time: '16:00', end: '18:30', dot: 'dot-blue'   },
+  { time: '18:30', end: '19:00', dot: 'dot-muted'  },
+  { time: '19:00', end: '20:00', dot: 'dot-cyan'   },
+  { time: '20:00', end: '21:00', dot: 'dot-purple' },
+  { time: '21:00', end: '21:15', dot: 'dot-muted'  },
+  { time: '21:15', end: '22:30', dot: 'dot-purple' },
+  { time: '22:30', end: '23:59', dot: 'dot-muted'  },
 ];
-const LEM_SLOT_INDEX = 14;
+const READING_SLOT_INDEX = 14;
+
+function loadScheduleLabels() {
+  try { return JSON.parse(localStorage.getItem(SCHEDULE_LABELS_KEY) || 'null'); } catch { return null; }
+}
+function saveScheduleLabels(labels) { localStorage.setItem(SCHEDULE_LABELS_KEY, JSON.stringify(labels)); }
+
+function getSlotLabel(index) {
+  const labels = loadScheduleLabels();
+  if (labels && labels[index] !== undefined) return labels[index].label;
+  return `Окно расписания ${index + 1}`;
+}
+function getSlotSub(index) {
+  const labels = loadScheduleLabels();
+  if (labels && labels[index] !== undefined) return labels[index].sub || '';
+  return '';
+}
+
+function startEditSlotLabel(index) {
+  const el = document.getElementById('slot-label-' + index);
+  if (!el) return;
+  const currentLabel = getSlotLabel(index);
+  const currentSub = getSlotSub(index);
+  el.innerHTML = `
+    <input class="slot-edit-input" id="slot-edit-label-${index}" value="${currentLabel.replace(/"/g, '&quot;')}" placeholder="Название" />
+    <input class="slot-edit-input slot-edit-sub" id="slot-edit-sub-${index}" value="${currentSub.replace(/"/g, '&quot;')}" placeholder="Описание" />
+    <button class="slot-edit-ok" onclick="saveSlotLabel(${index})">OK</button>
+    <button class="slot-edit-cancel" onclick="renderTimeline()">✕</button>`;
+  document.getElementById('slot-edit-label-' + index).focus();
+  document.getElementById('slot-edit-label-' + index).addEventListener('keydown', e => { if (e.key === 'Enter') saveSlotLabel(index); if (e.key === 'Escape') renderTimeline(); });
+  document.getElementById('slot-edit-sub-' + index).addEventListener('keydown', e => { if (e.key === 'Enter') saveSlotLabel(index); if (e.key === 'Escape') renderTimeline(); });
+}
+
+function saveSlotLabel(index) {
+  const labelVal = document.getElementById('slot-edit-label-' + index).value.trim();
+  const subVal = document.getElementById('slot-edit-sub-' + index).value.trim();
+  if (!labelVal) return;
+  const labels = loadScheduleLabels() || {};
+  labels[index] = { label: labelVal, sub: subVal };
+  saveScheduleLabels(labels);
+  renderTimeline();
+}
 
 let lastActiveIndex = -1;
+
+let _audioCtx = null;
+document.addEventListener('click', () => {
+  if (!_audioCtx) {
+    _audioCtx = new AudioContext();
+  } else if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume();
+  }
+}, { once: true });
+
+function playTransitionChime() {
+  if (!_audioCtx || _audioCtx.state !== 'running') return;
+  try {
+    const ctx = _audioCtx;
+    const notes = [880, 1108.73, 1318.51]; // A5, C#6, E6 — мажорный аккорд
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.5);
+    });
+  } catch (e) { /* Audio API недоступен */ }
+}
 
 function renderTimeline() {
   const now        = new Date();
@@ -386,8 +786,11 @@ function renderTimeline() {
   const isTransition = activeIndex !== -1 && activeIndex !== lastActiveIndex;
   if (isTransition) {
     const s = slots[activeIndex];
-    sendNotification('Новый блок расписания', `${s.time} — ${s.label}${s.sub ? '\n' + s.sub : ''}`);
-    if (activeIndex === LEM_SLOT_INDEX) notifyTaskSummary();
+    const label = getSlotLabel(activeIndex);
+    const sub = getSlotSub(activeIndex);
+    sendNotification('Новый блок расписания', `${s.time} — ${label}${sub ? '\n' + sub : ''}`);
+    playTransitionChime();
+    if (activeIndex === READING_SLOT_INDEX) notifyTaskSummary();
     lastActiveIndex = activeIndex;
   }
 
@@ -400,6 +803,8 @@ function renderTimeline() {
     const isPast   = currentMin >= endMin;
     const isActive = i === activeIndex;
     const isNew    = isActive && isTransition;
+    const label    = getSlotLabel(i);
+    const sub      = getSlotSub(i);
 
     if (!nowInserted && startMin > currentMin) {
       const marker = document.createElement('div');
@@ -417,9 +822,9 @@ function renderTimeline() {
     el.innerHTML = `
       <div class="slot-time">${slot.time}</div>
       <div class="slot-dot ${slot.dot}"></div>
-      <div>
-        <div class="slot-label">${slot.label}</div>
-        ${slot.sub ? `<div class="slot-sub">${slot.sub}</div>` : ''}
+      <div class="slot-content" id="slot-label-${i}">
+        <div class="slot-label">${label} <button class="slot-rename-btn" onclick="event.stopPropagation(); startEditSlotLabel(${i})" title="Переименовать">✎</button></div>
+        ${sub ? `<div class="slot-sub">${sub}</div>` : ''}
       </div>`;
     tl.appendChild(el);
 
@@ -503,8 +908,12 @@ function setCurrentTask(id) {
   const isCurrentlyActive = clickedTask && clickedTask.current;
   tasks.forEach(t => { t.current = false; });
   if (!isCurrentlyActive) {
-    const t = tasks.find(t => t.id === id);
-    if (t) t.current = true;
+    const idx = tasks.findIndex(t => t.id === id);
+    if (idx !== -1) {
+      tasks[idx].current = true;
+      const [task] = tasks.splice(idx, 1);
+      tasks.unshift(task);
+    }
   }
   saveTasks(tasks);
   renderTodo();
@@ -1165,53 +1574,12 @@ fetch('/quotes.json')
 
 // ── Reading List ───────────────────────────────────────────────────────
 const READING_KEY = 'prod_reading_v1';
+const READING_BOOKS_KEY = 'prod_reading_books_v1';
 
-const BOOKS = [
-  { id: 'chan-1', num: 1, title: 'История твоей жизни', author: 'Тед Чан', type: 'сборник', subItems: [
-    { id: 'chan-1-s1', title: 'Вавилонская башня' },
-    { id: 'chan-1-s2', title: 'Понимай' },
-    { id: 'chan-1-s3', title: 'Деление на ноль' },
-    { id: 'chan-1-s4', title: 'История твоей жизни' },
-    { id: 'chan-1-s5', title: 'Семьдесят две буквы' },
-    { id: 'chan-1-s6', title: 'Эволюция человеческой науки' },
-    { id: 'chan-1-s7', title: 'Ад — это отсутствие Бога' },
-    { id: 'chan-1-s8', title: 'Тебе нравится, что ты видишь?' },
-  ]},
-  { id: 'chan-2', num: 2, title: 'Выдох', author: 'Тед Чан', type: 'сборник', subItems: [
-    { id: 'chan-2-s1', title: 'Купец и волшебные врата' },
-    { id: 'chan-2-s2', title: 'Выдох' },
-    { id: 'chan-2-s3', title: 'Чего от нас ждут' },
-    { id: 'chan-2-s4', title: 'Жизненный цикл программных объектов' },
-    { id: 'chan-2-s5', title: 'Дейси, переменная' },
-    { id: 'chan-2-s6', title: 'Истина факта, истина чувства' },
-    { id: 'chan-2-s7', title: 'Великое молчание' },
-    { id: 'chan-2-s8', title: 'Ома' },
-    { id: 'chan-2-s9', title: 'Тревога — это головокружение свободы' },
-  ]},
-  { id: 'leguin-1',        num: 3,  title: 'Обездоленный',        author: 'Урсула Ле Гуин',        type: 'роман'     },
-  { id: 'leguin-2',        num: 4,  title: 'Левая рука тьмы',     author: 'Урсула Ле Гуин',        type: 'роман'     },
-  { id: 'leguin-3', num: 5, title: 'Волшебник Земноморья', author: 'Урсула Ле Гуин', type: 'трилогия', subItems: [
-    { id: 'leguin-3-s1', title: 'Волшебник Земноморья' },
-    { id: 'leguin-3-s2', title: 'Гробницы Атуана' },
-    { id: 'leguin-3-s3', title: 'На последнем берегу' },
-  ]},
-  { id: 'lem-1', num: 6, title: 'Кибериада', author: 'Станислав Лем', type: 'сборник', subItems: [
-    { id: 'lem-1-s1', title: 'Как уцелела Вселенная' },
-    { id: 'lem-1-s2', title: 'Три электрорыцаря' },
-    { id: 'lem-1-s3', title: 'Путешествие первое' },
-    { id: 'lem-1-s4', title: 'Путешествие второе' },
-    { id: 'lem-1-s5', title: 'Путешествие третье' },
-    { id: 'lem-1-s6', title: 'Путешествие четвёртое' },
-    { id: 'lem-1-s7', title: 'Путешествие пятое' },
-    { id: 'lem-1-s8', title: 'Путешествие шестое' },
-    { id: 'lem-1-s9', title: 'Путешествие седьмое' },
-    { id: 'lem-1-s10', title: 'Альтруизин' },
-  ]},
-  { id: 'lem-2',           num: 7,  title: 'Непобедимый',         author: 'Станислав Лем',         type: 'роман'     },
-  { id: 'hofstadter',      num: 8,  title: 'Гёдель, Эшер, Бах',  author: 'Дуглас Хофштадтер',    type: 'нон-фикшн' },
-  { id: 'csikszentmihalyi',num: 9,  title: 'Поток',               author: 'Михай Чиксентмихайи',  type: 'нон-фикшн' },
-  { id: 'lem-3',           num: 10, title: 'Солярис',             author: 'Станислав Лем',         type: 'роман'     },
-];
+function loadReadingBooks() {
+  try { return JSON.parse(localStorage.getItem(READING_BOOKS_KEY) || '[]'); } catch { return []; }
+}
+function saveReadingBooks(books) { localStorage.setItem(READING_BOOKS_KEY, JSON.stringify(books)); }
 
 function loadReading() {
   try { return JSON.parse(localStorage.getItem(READING_KEY) || '{}'); } catch { return {}; }
@@ -1222,7 +1590,7 @@ function getBookState(data, id) {
   return data[id] || { status: 'waiting', page: 0, startedAt: null };
 }
 
-// Track which books are expanded
+let _readingEditMode = false;
 const expandedBooks = {};
 
 function toggleBookExpand(id) {
@@ -1230,51 +1598,101 @@ function toggleBookExpand(id) {
   renderReadingList();
 }
 
-function syncParentFromSubs(data, book) {
-  if (!book.subItems) return;
-  const allDone = book.subItems.every(s => getBookState(data, s.id).status === 'done');
-  const anyStarted = book.subItems.some(s => getBookState(data, s.id).status !== 'waiting');
-  const parentState = getBookState(data, book.id);
-  if (allDone) {
-    data[book.id] = { ...parentState, status: 'done' };
-  } else if (anyStarted && parentState.status === 'done') {
-    data[book.id] = { ...parentState, status: 'reading', startedAt: parentState.startedAt || todayStr() };
-  }
+function toggleReadingEditMode() {
+  _readingEditMode = !_readingEditMode;
+  renderReadingList();
 }
 
-function syncSubsFromParent(data, book, newStatus) {
-  if (!book.subItems) return;
-  if (newStatus === 'done') {
-    book.subItems.forEach(s => {
-      data[s.id] = { ...getBookState(data, s.id), status: 'done' };
-    });
-  } else if (newStatus === 'waiting') {
-    book.subItems.forEach(s => {
-      data[s.id] = { ...getBookState(data, s.id), status: 'waiting' };
-    });
-  }
+function addBook() {
+  const titleEl = document.getElementById('reading-add-title');
+  const authorEl = document.getElementById('reading-add-author');
+  const typeEl = document.getElementById('reading-add-type');
+  if (!titleEl) return;
+  const title = titleEl.value.trim();
+  const author = authorEl.value.trim();
+  const type = typeEl.value.trim() || 'роман';
+  if (!title) return;
+  const books = loadReadingBooks();
+  const id = 'book-' + Date.now();
+  books.push({ id, title, author, type });
+  saveReadingBooks(books);
+  titleEl.value = '';
+  authorEl.value = '';
+  typeEl.value = '';
+  renderReadingList();
 }
 
-function toggleSubItemStatus(bookId, subId) {
+function removeBook(id) {
+  if (!confirm('Удалить книгу из списка?')) return;
+  let books = loadReadingBooks();
+  const book = books.find(b => b.id === id);
+  books = books.filter(b => b.id !== id);
+  saveReadingBooks(books);
   const data = loadReading();
-  const state = getBookState(data, subId);
-  const next = state.status === 'done' ? 'waiting' : 'done';
-  data[subId] = { ...state, status: next };
-  const book = BOOKS.find(b => b.id === bookId);
-  if (book) syncParentFromSubs(data, book);
+  delete data[id];
+  if (book && book.subItems) book.subItems.forEach(s => delete data[s.id]);
   saveReading(data);
   renderReadingList();
 }
 
+function moveBook(id, dir) {
+  const books = loadReadingBooks();
+  const idx = books.findIndex(b => b.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= books.length) return;
+  [books[idx], books[newIdx]] = [books[newIdx], books[idx]];
+  saveReadingBooks(books);
+  renderReadingList();
+}
+
+function startEditBook(id) {
+  const books = loadReadingBooks();
+  const book = books.find(b => b.id === id);
+  if (!book) return;
+  const el = document.getElementById('book-row-' + id);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="book-edit-form">
+      <input class="book-edit-input" id="edit-title-${id}" value="${(book.title || '').replace(/"/g, '&quot;')}" placeholder="Название" />
+      <input class="book-edit-input" id="edit-author-${id}" value="${(book.author || '').replace(/"/g, '&quot;')}" placeholder="Автор" />
+      <input class="book-edit-input book-edit-type" id="edit-type-${id}" value="${(book.type || '').replace(/"/g, '&quot;')}" placeholder="Тип" />
+      <button class="book-edit-save" onclick="saveEditBook('${id}')">OK</button>
+      <button class="book-edit-cancel" onclick="renderReadingList()">✕</button>
+    </div>`;
+}
+
+function saveEditBook(id) {
+  const books = loadReadingBooks();
+  const book = books.find(b => b.id === id);
+  if (!book) return;
+  const title = document.getElementById('edit-title-' + id).value.trim();
+  const author = document.getElementById('edit-author-' + id).value.trim();
+  const type = document.getElementById('edit-type-' + id).value.trim();
+  if (!title) return;
+  book.title = title;
+  book.author = author;
+  book.type = type || 'роман';
+  saveReadingBooks(books);
+  renderReadingList();
+}
+
+function clearReadingList() {
+  if (!confirm('Очистить весь список чтения? Все книги и прогресс будут удалены.')) return;
+  saveReadingBooks([]);
+  saveReading({});
+  renderReadingList();
+}
+
 function cycleBookStatus(id) {
+  const books = loadReadingBooks();
   const data  = loadReading();
   const state = getBookState(data, id);
   const order = ['waiting', 'reading', 'done'];
   const next  = order[(order.indexOf(state.status) + 1) % order.length];
 
-  // only one book "reading" at a time: if switching to reading, demote previous
   if (next === 'reading') {
-    BOOKS.forEach(b => {
+    books.forEach(b => {
       if (b.id !== id && getBookState(data, b.id).status === 'reading') {
         data[b.id] = { ...getBookState(data, b.id), status: 'done' };
       }
@@ -1287,9 +1705,30 @@ function cycleBookStatus(id) {
     startedAt: next === 'reading' && !state.startedAt ? todayStr() : state.startedAt,
   };
 
-  const book = BOOKS.find(b => b.id === id);
-  if (book) syncSubsFromParent(data, book, next);
+  const book = books.find(b => b.id === id);
+  if (book && book.subItems) {
+    if (next === 'done') book.subItems.forEach(s => { data[s.id] = { ...getBookState(data, s.id), status: 'done' }; });
+    if (next === 'waiting') book.subItems.forEach(s => { data[s.id] = { ...getBookState(data, s.id), status: 'waiting' }; });
+  }
 
+  saveReading(data);
+  renderReadingList();
+}
+
+function toggleSubItemStatus(bookId, subId) {
+  const books = loadReadingBooks();
+  const data = loadReading();
+  const state = getBookState(data, subId);
+  const next = state.status === 'done' ? 'waiting' : 'done';
+  data[subId] = { ...state, status: next };
+  const book = books.find(b => b.id === bookId);
+  if (book && book.subItems) {
+    const allDone = book.subItems.every(s => getBookState(data, s.id).status === 'done');
+    const anyStarted = book.subItems.some(s => getBookState(data, s.id).status !== 'waiting');
+    const parentState = getBookState(data, book.id);
+    if (allDone) data[book.id] = { ...parentState, status: 'done' };
+    else if (anyStarted && parentState.status === 'done') data[book.id] = { ...parentState, status: 'reading', startedAt: parentState.startedAt || todayStr() };
+  }
   saveReading(data);
   renderReadingList();
 }
@@ -1300,7 +1739,6 @@ function updateBookPage(id, value) {
   const page  = Math.max(0, parseInt(value, 10) || 0);
   data[id] = { ...state, page };
   saveReading(data);
-  // re-render only the page label, not the whole list (avoids losing focus)
   const label = document.getElementById('book-page-since-' + id);
   if (label && state.startedAt) label.textContent = `с ${state.startedAt}`;
 }
@@ -1308,17 +1746,24 @@ function updateBookPage(id, value) {
 const STATUS_ICON = { waiting: '⬜', reading: '🔄', done: '✅' };
 
 function renderReadingList() {
+  const books     = loadReadingBooks();
   const data      = loadReading();
-  const doneCount = BOOKS.filter(b => getBookState(data, b.id).status === 'done').length;
-  const pct       = Math.round((doneCount / BOOKS.length) * 100);
+  const total     = books.length;
+  const doneCount = books.filter(b => getBookState(data, b.id).status === 'done').length;
+  const pct       = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
   document.getElementById('reading-done-count').textContent = doneCount;
+  document.getElementById('reading-total-count').textContent = total;
   document.getElementById('reading-progress-fill').style.width = pct + '%';
 
   const container = document.getElementById('reading-books');
   container.innerHTML = '';
 
-  BOOKS.forEach(book => {
+  if (total === 0) {
+    container.innerHTML = '<div class="reading-empty">Список пуст. Добавьте книги для чтения.</div>';
+  }
+
+  books.forEach((book, idx) => {
     const state   = getBookState(data, book.id);
     const { status, page, startedAt } = state;
     const hasSubs = book.subItems && book.subItems.length > 0;
@@ -1326,6 +1771,7 @@ function renderReadingList() {
 
     const el = document.createElement('div');
     el.className = 'book-item book-' + status;
+    el.id = 'book-row-' + book.id;
 
     const pageRow = status === 'reading' ? `
       <div class="book-page-row">
@@ -1345,19 +1791,28 @@ function renderReadingList() {
     const subsCounter = hasSubs ? `<span class="book-subs-counter">${subsDoneCount}/${book.subItems.length}</span>` : '';
     const expandBtn = hasSubs ? `<button class="book-expand-btn${isExpanded ? ' expanded' : ''}" onclick="toggleBookExpand('${book.id}')" title="Раскрыть содержание">▸</button>` : '';
 
+    const editBtns = _readingEditMode ? `
+      <div class="book-edit-actions">
+        <button class="book-move-btn" onclick="moveBook('${book.id}', -1)" title="Вверх" ${idx === 0 ? 'disabled' : ''}>▲</button>
+        <button class="book-move-btn" onclick="moveBook('${book.id}', 1)" title="Вниз" ${idx === total - 1 ? 'disabled' : ''}>▼</button>
+        <button class="book-edit-btn" onclick="startEditBook('${book.id}')" title="Редактировать">✎</button>
+        <button class="book-remove-btn" onclick="removeBook('${book.id}')" title="Удалить">✕</button>
+      </div>` : '';
+
     el.innerHTML = `
       <button class="book-status-btn" onclick="cycleBookStatus('${book.id}')" title="Изменить статус">
         ${STATUS_ICON[status]}
       </button>
       <div class="book-body">
         <div class="book-main-row">
-          <span class="book-num">${book.num}.</span>
+          <span class="book-num">${idx + 1}.</span>
           <span class="book-title">${book.title}</span>
-          <span class="book-type">${book.type}</span>
+          <span class="book-type">${book.type || ''}</span>
           ${subsCounter}
           ${expandBtn}
+          ${editBtns}
         </div>
-        <div class="book-author">${book.author}</div>
+        <div class="book-author">${book.author || ''}</div>
         ${pageRow}
       </div>`;
 
@@ -1383,9 +1838,267 @@ function renderReadingList() {
       container.appendChild(subsEl);
     }
   });
+
+  // Add book form (always visible at bottom)
+  const addForm = document.createElement('div');
+  addForm.className = 'reading-add-form';
+  addForm.innerHTML = `
+    <input class="reading-add-input" id="reading-add-title" placeholder="Название книги" />
+    <input class="reading-add-input reading-add-author" id="reading-add-author" placeholder="Автор" />
+    <input class="reading-add-input reading-add-type-input" id="reading-add-type" placeholder="Тип" />
+    <button class="reading-add-btn" onclick="addBook()">+</button>`;
+  container.appendChild(addForm);
+
+  // Bind Enter on title input
+  setTimeout(() => {
+    const inp = document.getElementById('reading-add-title');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') addBook(); });
+  }, 0);
 }
 
 renderReadingList();
+
+// ── Training Plan Target ─────────────────────────────────────────────────
+function getTodayDateStr() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getTrainingForDate(dateStr) {
+  return TRAINING_SCHEDULE.find(t => t.date === dateStr) || null;
+}
+
+function getNextTraining() {
+  const today = getTodayDateStr();
+  return TRAINING_SCHEDULE.find(t => t.date > today) || null;
+}
+
+function getTrainingWeek(weekNum) {
+  return TRAINING_SCHEDULE.filter(t => t.week === weekNum);
+}
+
+function getWeek5kTarget(weekDays) {
+  for (const d of weekDays) {
+    const m = d.workout.match(/цель:\s*([\d:]+)/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function classifyWorkout(workout) {
+  if (/^Отдых/.test(workout)) return 'rest';
+  if (/Интервал|Ускорен/i.test(workout)) return 'intervals';
+  if (/Темповый/i.test(workout)) return 'tempo';
+  if (/5 вёрст|ЦЕЛЕВОЙ/i.test(workout)) return 'race';
+  if (/Длинный/i.test(workout)) return 'long';
+  return 'easy';
+}
+
+function renderTrainingToday() {
+  const container = document.getElementById('training-today');
+  if (!container) return;
+  if (!TRAINING_SCHEDULE.length) {
+    container.innerHTML = '<div class="training-today-block tt-loading">Загрузка плана тренировок...</div>';
+    return;
+  }
+
+  const todayStr = getTodayDateStr();
+  let entry = getTrainingForDate(todayStr);
+  let isUpcoming = false;
+  if (!entry) {
+    entry = getNextTraining();
+    isUpcoming = !!entry;
+  }
+  if (!entry) {
+    container.innerHTML = '<div class="training-today-block tt-empty">План тренировок завершён</div>';
+    return;
+  }
+
+  const weekDays = getTrainingWeek(entry.week);
+  const target5k = getWeek5kTarget(weekDays);
+  const meta = TRAINING_PLAN_META;
+  const progressPct = Math.round(((entry.week - 1) / meta.totalWeeks) * 100);
+  const workoutType = classifyWorkout(entry.workout);
+  const isRest = workoutType === 'rest';
+
+  const phaseInfo = meta.phases.find(p =>
+    entry.week >= p.weeks[0] && entry.week <= p.weeks[1]
+  );
+  const phaseName = phaseInfo ? phaseInfo.name : '';
+
+  const weekScheduleHtml = weekDays.map(d => {
+    const isCurrent = d.date === entry.date;
+    const wType = classifyWorkout(d.workout);
+    const shortLabel = /^Отдых/.test(d.workout) ? 'Отдых'
+      : d.workout.length > 30 ? d.workout.substring(0, 28) + '…' : d.workout;
+    return `<div class="tw-day ${isCurrent ? 'tw-day-today' : ''} tw-day-${wType}">
+      <span class="tw-day-name">${d.day}</span>
+      <span class="tw-day-workout" title="${d.workout.replace(/"/g, '&quot;')}">${shortLabel}</span>
+    </div>`;
+  }).join('');
+
+  const todayLabel = isUpcoming
+    ? `Старт плана: <strong>${formatDateRu(entry.date)}</strong>, ${entry.day}`
+    : 'Сегодня:';
+
+  container.innerHTML = `
+    <div class="training-today-block">
+      <div class="tt-header">
+        <div class="tt-phase-badge tt-phase-${phaseInfo ? phaseInfo.id : 2}">${phaseName}</div>
+        <div class="tt-week-label">Неделя ${entry.week} / ${meta.totalWeeks}</div>
+        ${target5k ? `<div class="tt-target5k">5К цель: <strong>${target5k}</strong></div>` : ''}
+        <div class="tt-header-actions">
+          <div class="tt-record">Рекорд: ${meta.currentRecord} → ${meta.finalTarget}</div>
+          <button class="tt-btn tt-records-btn" onclick="toggleRecordsModal()" title="Рекорды 5 вёрст">Рекорды</button>
+          <button class="tt-btn tt-refresh-btn" onclick="refreshTrainingData()" title="Обновить данные">↻</button>
+        </div>
+      </div>
+      <div class="tt-progress-bar">
+        <div class="tt-progress-fill" style="width:${progressPct}%"></div>
+      </div>
+      <div class="tt-today ${isRest ? 'tt-today-rest' : ''} tt-today-${workoutType}">
+        <span class="tt-today-label">${todayLabel}</span>
+        <span class="tt-today-workout">${entry.workout}</span>
+      </div>
+      <div class="tw-week-schedule">${weekScheduleHtml}</div>
+    </div>`;
+}
+
+function formatDateRu(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+}
+
+async function refreshTrainingData() {
+  const btn = document.querySelector('.tt-refresh-btn');
+  if (btn) { btn.classList.add('tt-spinning'); btn.disabled = true; }
+  await initTrainingData();
+  renderTrainingToday();
+  if (btn) { setTimeout(() => { btn.classList.remove('tt-spinning'); btn.disabled = false; }, 400); }
+}
+
+// ── Records Modal ────────────────────────────────────────────────────────
+let recordsModalOpen = false;
+let recFilterGender = 'all';   // 'all' | 'М' | 'Ж'
+let recSearchQuery = '';
+
+function toggleRecordsModal() {
+  recordsModalOpen = !recordsModalOpen;
+  if (recordsModalOpen) { recFilterGender = 'all'; recSearchQuery = ''; renderRecordsModal(); }
+  else closeRecordsModal();
+}
+
+function closeRecordsModal() {
+  recordsModalOpen = false;
+  const modal = document.getElementById('records-modal');
+  if (modal) modal.remove();
+}
+
+function setRecGenderFilter(gender) {
+  recFilterGender = gender;
+  updateRecordsTable();
+}
+
+function onRecSearchInput(val) {
+  recSearchQuery = val.toLowerCase();
+  updateRecordsTable();
+}
+
+function getFilteredRecords() {
+  return RECORDS_DATA.filter(r => {
+    if (recFilterGender !== 'all' && r.gender !== recFilterGender) return false;
+    if (recSearchQuery && !r.location.toLowerCase().includes(recSearchQuery)) return false;
+    return true;
+  });
+}
+
+function buildRecordsRows(filtered) {
+  return filtered.map((r, i) => {
+    const isMale = r.gender === 'М';
+    const isRostov = r.location.includes('Ростов-на-Дону');
+    const genderClass = isMale ? 'rec-male' : 'rec-female';
+    const rostovClass = isRostov ? ' rec-rostov' : '';
+    return `<tr class="${genderClass}${rostovClass}">
+      <td class="rec-num">${i + 1}</td>
+      <td class="rec-loc">${r.location}</td>
+      <td class="rec-time">${r.time}</td>
+      <td class="rec-athlete">${r.athlete}</td>
+      <td class="rec-gender">${r.gender}</td>
+      <td class="rec-date">${r.date}</td>
+      <td class="rec-pace">${r.pace}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateRecordsTable() {
+  const tbody = document.getElementById('records-tbody');
+  const countEl = document.getElementById('records-count');
+  if (!tbody) return;
+  const filtered = getFilteredRecords();
+  tbody.innerHTML = buildRecordsRows(filtered);
+  if (countEl) countEl.textContent = `${filtered.length} / ${RECORDS_DATA.length}`;
+}
+
+function renderRecordsModal() {
+  closeRecordsModal();
+  if (!RECORDS_DATA.length) return;
+  recordsModalOpen = true;
+
+  const modal = document.createElement('div');
+  modal.id = 'records-modal';
+  modal.className = 'records-modal-overlay';
+  modal.onclick = (e) => { if (e.target === modal) closeRecordsModal(); };
+
+  const filtered = getFilteredRecords();
+
+  modal.innerHTML = `
+    <div class="records-modal-content">
+      <div class="records-modal-header">
+        <h3>Рекорды трасс 5 вёрст</h3>
+        <span class="records-count" id="records-count">${filtered.length} / ${RECORDS_DATA.length}</span>
+        <button class="records-modal-close" onclick="closeRecordsModal()">✕</button>
+      </div>
+      <div class="records-filters">
+        <div class="rec-gender-filter">
+          <button class="rec-filter-btn ${recFilterGender === 'all' ? 'active' : ''}" onclick="setRecGenderFilter('all')">Все</button>
+          <button class="rec-filter-btn rec-filter-male ${recFilterGender === 'М' ? 'active' : ''}" onclick="setRecGenderFilter('М')">М</button>
+          <button class="rec-filter-btn rec-filter-female ${recFilterGender === 'Ж' ? 'active' : ''}" onclick="setRecGenderFilter('Ж')">Ж</button>
+        </div>
+        <input type="text" class="rec-search-input" placeholder="Поиск по месту старта…" value="${recSearchQuery}" oninput="onRecSearchInput(this.value)" />
+      </div>
+      <div class="records-table-wrap">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Старт</th>
+              <th>Время</th>
+              <th>Атлет</th>
+              <th>Пол</th>
+              <th>Дата</th>
+              <th>Темп</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody">${buildRecordsRows(filtered)}</tbody>
+        </table>
+      </div>
+      <div class="records-legend">
+        <span class="rec-legend-item"><span class="rec-legend-dot rec-legend-male"></span> Мужчины</span>
+        <span class="rec-legend-item"><span class="rec-legend-dot rec-legend-female"></span> Женщины</span>
+        <span class="rec-legend-item"><span class="rec-legend-dot rec-legend-rostov"></span> Ростов-на-Дону</span>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+}
+
+// ── Init training data on load ───────────────────────────────────────────
+initTrainingData().then(() => {
+  renderTrainingToday();
+});
 
 // ── Running Progress ──────────────────────────────────────────────────────
 const RUNNING_KEY = 'prod_running_v1';
@@ -1607,6 +2320,10 @@ function calcProductivity(completed, remaining) {
   return Math.round((completed / total) * 100);
 }
 
+function localDateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function getDateRange(period) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1618,7 +2335,7 @@ function getDateRange(period) {
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    dates.push(d.toISOString().slice(0, 10));
+    dates.push(localDateStr(d));
   }
   return dates;
 }
@@ -1739,7 +2456,11 @@ function renderProdChart() {
 
   const dates = getDateRange(currentProdPeriod);
   const history = loadHistory();
-  const values = dates.map(d => history.filter(h => h.doneAt && h.doneAt.slice(0, 10) === d).length);
+  const today = localDateStr(new Date());
+  const values = dates.map(d => history.filter(h => {
+    if (!h.doneAt) return false;
+    return localDateStr(new Date(h.doneAt)) === d;
+  }).length);
   const maxVal = Math.max(1, ...values);
 
   const rect = canvas.parentElement.getBoundingClientRect();
@@ -1757,8 +2478,8 @@ function renderProdChart() {
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
-  // grid lines
-  const gridLines = 4;
+  // grid lines — не больше maxVal чтобы метки не дублировались
+  const gridLines = Math.min(4, maxVal);
   ctx.strokeStyle = 'rgba(255,255,255,.06)';
   ctx.lineWidth = 1;
   ctx.font = '10px system-ui, sans-serif';
@@ -1838,10 +2559,11 @@ function renderProdChart() {
     dates.forEach((dateStr, i) => {
       const val = values[i];
       const x = padL + gap + i * (barW + gap);
+
+      const isToday = dateStr === today;
+
       const h = (val / maxVal) * chartH;
       const y = padT + chartH - h;
-
-      const isToday = dateStr === todayStr();
       const color = isToday ? 'rgba(167,139,250,' : 'rgba(6,182,212,';
 
       const grad = ctx.createLinearGradient(x, y, x, padT + chartH);
@@ -1902,6 +2624,725 @@ function onProdChartClick(e) {
 
 renderProdStats();
 window.addEventListener('resize', () => renderProdChart());
+
+// ── Zen / Focus Mode ─────────────────────────────────────────────────────
+let zenMode = false;
+function toggleZenMode() {
+  zenMode = !zenMode;
+  document.body.classList.toggle('zen-active', zenMode);
+}
+
+// ── Keyboard Shortcuts ───────────────────────────────────────────────────
+function toggleShortcutsHelp() {
+  const el = document.getElementById('shortcuts-overlay');
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  switch (e.key.toLowerCase()) {
+    case 'n':
+      e.preventDefault();
+      if (zenMode) toggleZenMode();
+      document.getElementById('todo-input').focus();
+      break;
+    case 'f':
+      e.preventDefault();
+      toggleZenMode();
+      break;
+    case ' ': {
+      e.preventDefault();
+      const current = loadTasks().find(t => t.current);
+      if (current) toggleTask(current.id);
+      break;
+    }
+    case 'd':
+      e.preventDefault();
+      toggleDistractionPanel();
+      break;
+    case 'a':
+      e.preventDefault();
+      navigateToAdmin();
+      break;
+    case 'w':
+      e.preventDefault();
+      openWidgetSettings();
+      break;
+    case 'escape':
+      e.preventDefault();
+      closeWidgetSettings();
+      closeRecordsModal();
+      if (document.getElementById('shortcuts-overlay').style.display !== 'none')
+        toggleShortcutsHelp();
+      break;
+    case 'home':
+      e.preventDefault();
+      scrollToEdge('top');
+      break;
+    case 'end':
+      e.preventDefault();
+      scrollToEdge('bottom');
+      break;
+    case '?':
+      e.preventDefault();
+      toggleShortcutsHelp();
+      break;
+    default:
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        const cfg = getWidgetConfig();
+        const order = cfg ? cfg.order : [...DEFAULT_WIDGET_ORDER];
+        const visibleOrder = order.filter(id => {
+          if (!cfg) return id === 'todo';
+          return cfg.visible[id] !== false;
+        });
+        const idx = e.key === '0' ? 9 : parseInt(e.key) - 1;
+        if (visibleOrder[idx]) {
+          const el = document.querySelector(`[data-widget="${visibleOrder[idx]}"]`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+  }
+});
+
+function navigateToAdmin() {
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (user && user.role === 'admin') window.location.href = '/admin/';
+}
+
+function scrollToEdge(dir) {
+  window.scrollTo({ top: dir === 'top' ? 0 : document.documentElement.scrollHeight, behavior: 'smooth' });
+}
+
+// ── Scroll arrows ────────────────────────────────────────────────────────
+function initScrollArrows() {
+  const wrap = document.createElement('div');
+  wrap.className = 'scroll-arrows';
+  wrap.innerHTML = `
+    <button class="scroll-arrow scroll-arrow-up" onclick="scrollToEdge('top')" title="В начало (Home)">&#x2191;</button>
+    <button class="scroll-arrow scroll-arrow-down" onclick="scrollToEdge('bottom')" title="В конец (End)">&#x2193;</button>`;
+  document.body.appendChild(wrap);
+
+  const upBtn = wrap.querySelector('.scroll-arrow-up');
+  const downBtn = wrap.querySelector('.scroll-arrow-down');
+
+  function updateArrows() {
+    const scrollY = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    upBtn.classList.toggle('visible', scrollY > 200);
+    downBtn.classList.toggle('visible', scrollY < maxScroll - 200);
+  }
+  window.addEventListener('scroll', updateArrows, { passive: true });
+  updateArrows();
+}
+initScrollArrows();
+
+// ── Scratchpad ───────────────────────────────────────────────────────────
+const SCRATCHPAD_KEY = 'prod_scratchpad_v1';
+
+function loadScratchpad() {
+  try { return JSON.parse(localStorage.getItem(SCRATCHPAD_KEY) || '{}'); } catch { return {}; }
+}
+function saveScratchpad(data) { localStorage.setItem(SCRATCHPAD_KEY, JSON.stringify(data)); }
+
+function initScratchpad() {
+  const data = loadScratchpad();
+  const today = localDateStr(new Date());
+  const textarea = document.getElementById('scratchpad-textarea');
+  if (!textarea) return;
+
+  // Archive previous day if needed
+  if (data.date && data.date !== today && data.text) {
+    if (!data.history) data.history = {};
+    data.history[data.date] = data.text;
+    data.text = '';
+    data.date = today;
+    saveScratchpad(data);
+  }
+
+  textarea.value = data.date === today ? (data.text || '') : '';
+
+  let saveTimer = null;
+  textarea.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const d = loadScratchpad();
+      d.text = textarea.value;
+      d.date = localDateStr(new Date());
+      saveScratchpad(d);
+      const status = document.getElementById('scratchpad-status');
+      status.textContent = 'сохранено';
+      setTimeout(() => { status.textContent = ''; }, 2000);
+    }, 500);
+  });
+}
+
+function scratchpadToTask() {
+  const textarea = document.getElementById('scratchpad-textarea');
+  const text = textarea.value.trim();
+  if (!text) return;
+  // Take first line as task
+  const firstLine = text.split('\n')[0].slice(0, 120);
+  addTask(firstLine);
+  textarea.value = '';
+  const d = loadScratchpad();
+  d.text = '';
+  d.date = localDateStr(new Date());
+  saveScratchpad(d);
+}
+
+function toggleScratchpadHistory() {
+  const panel = document.getElementById('scratchpad-history');
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+  const data = loadScratchpad();
+  const history = data.history || {};
+  const dates = Object.keys(history).sort().reverse();
+  if (!dates.length) {
+    panel.innerHTML = '<div style="color:var(--muted);font-size:13px;">Пока пусто</div>';
+  } else {
+    panel.innerHTML = dates.slice(0, 14).map(d => {
+      const dt = new Date(d + 'T00:00:00');
+      const label = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', weekday: 'short' });
+      return `<div class="scratchpad-history-day">
+        <div class="scratchpad-history-date">${label}</div>
+        <div class="scratchpad-history-text">${escHtml(history[d])}</div>
+      </div>`;
+    }).join('');
+  }
+  panel.style.display = '';
+}
+
+initScratchpad();
+
+// ── Distraction Log ──────────────────────────────────────────────────────
+const DISTRACTION_KEY = 'prod_distractions_v1';
+const DISTRACTION_CATS = [
+  { id: 'youtube',   icon: '📺', label: 'YouTube' },
+  { id: 'social',    icon: '📱', label: 'Соцсети' },
+  { id: 'messenger', icon: '💬', label: 'Мессенджер' },
+  { id: 'other',     icon: '❓', label: 'Другое' },
+];
+
+function loadDistractions() {
+  try { return JSON.parse(localStorage.getItem(DISTRACTION_KEY) || '{}'); } catch { return {}; }
+}
+function saveDistractions(d) { localStorage.setItem(DISTRACTION_KEY, JSON.stringify(d)); }
+
+function logDistraction(category) {
+  const data = loadDistractions();
+  const today = localDateStr(new Date());
+  if (!data[today]) data[today] = [];
+  data[today].push({ category, time: new Date().toISOString() });
+  saveDistractions(data);
+  renderDistractionWidget();
+  toggleDistractionPanel();
+}
+
+function toggleDistractionPanel() {
+  const panel = document.getElementById('distraction-panel');
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+  panel.innerHTML = DISTRACTION_CATS.map(c =>
+    `<button class="distraction-cat-btn" onclick="logDistraction('${c.id}')">${c.icon} ${c.label}</button>`
+  ).join('');
+  panel.style.display = '';
+}
+
+function renderDistractionWidget() {
+  const data = loadDistractions();
+  const today = localDateStr(new Date());
+  const todayCount = (data[today] || []).length;
+  document.getElementById('stat-distraction-count').textContent = todayCount;
+
+  // Weekly report
+  const weeklyEl = document.getElementById('distraction-weekly');
+  const counts = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = localDateStr(d);
+    (data[key] || []).forEach(e => { counts[e.category] = (counts[e.category] || 0) + 1; });
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  if (sorted.length) {
+    weeklyEl.innerHTML = 'За неделю: ' + sorted.map(([cat, n]) => {
+      const c = DISTRACTION_CATS.find(x => x.id === cat);
+      return `${c ? c.icon : ''} ${n}`;
+    }).join(' · ');
+  } else {
+    weeklyEl.innerHTML = '';
+  }
+}
+
+// Close distraction panel on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('distraction-panel');
+  const btn = document.getElementById('distraction-log-btn');
+  if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && e.target !== btn) {
+    panel.style.display = 'none';
+  }
+});
+
+renderDistractionWidget();
+
+// ── Morning Briefing ─────────────────────────────────────────────────────
+const BRIEFING_KEY = 'prod_briefing_dismissed';
+
+function shouldShowBriefing() {
+  const h = new Date().getHours();
+  if (h < 7 || h >= 9) return false;
+  return localStorage.getItem(BRIEFING_KEY) !== localDateStr(new Date());
+}
+
+function renderBriefing() {
+  if (!shouldShowBriefing()) return;
+  const overlay = document.getElementById('briefing-overlay');
+  const card = document.getElementById('briefing-card');
+  const today = localDateStr(new Date());
+
+  // Unfinished tasks (carried from previous days)
+  const tasks = loadTasks().filter(t => !t.done);
+  const carriedTasks = tasks.filter(t => t.addedDate && t.addedDate < today);
+  const totalTasks = tasks.length;
+
+  // Monthly goals
+  const mk = currentMonthKey();
+  const goals = getGoalsForPeriod(MONTHLY_GOALS_KEY, mk);
+  const goalsDone = goals.filter(g => g.done).length;
+  const goalsTotal = goals.length;
+  const goalsPct = goalsTotal > 0 ? Math.round(goalsDone / goalsTotal * 100) : 0;
+
+  // Current book
+  const reading = loadReading();
+  const currentBook = loadReadingBooks().find(b => {
+    const st = reading[b.id];
+    return st && st.status === 'reading';
+  });
+  const bookInfo = currentBook
+    ? `${currentBook.title} — стр. ${(reading[currentBook.id] || {}).page || '?'}`
+    : 'нет активной книги';
+
+  // Early start streak
+  const earlyData = loadEarlyData();
+  const emk = getEarlyMonthKey();
+  const earlyDays = earlyData[emk] ? Object.keys(earlyData[emk]).length : 0;
+
+  card.innerHTML = `
+    <div class="briefing-title">Доброе утро!</div>
+    <div class="briefing-section">
+      <div class="briefing-section-title">Задачи</div>
+      <div class="briefing-stat">${totalTasks} задач на сегодня</div>
+      ${carriedTasks.length ? `<div class="briefing-tasks">${carriedTasks.length} перенесено с прошлых дней</div>` : ''}
+    </div>
+    <div class="briefing-section">
+      <div class="briefing-section-title">Цели месяца</div>
+      <div class="briefing-stat">${goalsPct}% <span style="color:var(--muted);font-size:13px">(${goalsDone}/${goalsTotal})</span></div>
+    </div>
+    <div class="briefing-section">
+      <div class="briefing-section-title">Чтение</div>
+      <div class="briefing-stat" style="font-size:14px">${bookInfo}</div>
+    </div>
+    <div class="briefing-section">
+      <div class="briefing-section-title">Ранний старт</div>
+      <div class="briefing-stat">${earlyDays} дней в этом месяце</div>
+    </div>
+    <button class="briefing-start-btn" onclick="dismissBriefing()">Начать день</button>
+  `;
+  overlay.style.display = '';
+}
+
+function dismissBriefing() {
+  localStorage.setItem(BRIEFING_KEY, localDateStr(new Date()));
+  document.getElementById('briefing-overlay').style.display = 'none';
+}
+
+renderBriefing();
+
+// ── Weekly Retrospective ─────────────────────────────────────────────────
+const RETRO_KEY = 'prod_retrospective_v1';
+
+function getISOWeek(date) {
+  const d = new Date(date.getTime());
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
+}
+
+function getWeekKey() {
+  const now = new Date();
+  return now.getFullYear() + '-W' + String(getISOWeek(now)).padStart(2, '0');
+}
+
+function loadRetro() {
+  try { return JSON.parse(localStorage.getItem(RETRO_KEY) || '{}'); } catch { return {}; }
+}
+function saveRetro(d) { localStorage.setItem(RETRO_KEY, JSON.stringify(d)); }
+
+function shouldShowRetro() {
+  const now = new Date();
+  if (now.getDay() !== 5 || now.getHours() < 20) return false;
+  const data = loadRetro();
+  return !data[getWeekKey()];
+}
+
+function calcRetroStats() {
+  const history = loadHistory();
+  const today = new Date();
+  // Get Monday of this week
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (today.getDay() + 6) % 7);
+  monday.setHours(0, 0, 0, 0);
+
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    weekDays.push(localDateStr(d));
+  }
+
+  const weekHistory = history.filter(h => {
+    if (!h.doneAt) return false;
+    const d = localDateStr(new Date(h.doneAt));
+    return weekDays.includes(d);
+  });
+
+  const byDay = {};
+  weekHistory.forEach(h => {
+    const d = localDateStr(new Date(h.doneAt));
+    byDay[d] = (byDay[d] || 0) + 1;
+  });
+
+  const bestDayEntry = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0];
+  const bestDay = bestDayEntry
+    ? new Date(bestDayEntry[0] + 'T00:00:00').toLocaleDateString('ru-RU', { weekday: 'long' }) + ` (${bestDayEntry[1]})`
+    : '—';
+
+  // Early starts this week
+  const earlyData = loadEarlyData();
+  const emk = getEarlyMonthKey();
+  const earlyThisWeek = weekDays.filter(d => earlyData[emk] && earlyData[emk][d]).length;
+
+  // Monthly goals
+  const goals = getGoalsForPeriod(MONTHLY_GOALS_KEY, currentMonthKey());
+  const goalsPct = goals.length > 0 ? Math.round(goals.filter(g => g.done).length / goals.length * 100) : 0;
+
+  // Distractions
+  const distrData = loadDistractions();
+  let totalDistractions = 0;
+  weekDays.forEach(d => { totalDistractions += (distrData[d] || []).length; });
+
+  return {
+    tasksCompleted: weekHistory.length,
+    avgPerDay: weekHistory.length > 0 ? (weekHistory.length / 7).toFixed(1) : '0',
+    bestDay,
+    earlyStarts: earlyThisWeek,
+    goalsPct,
+    distractions: totalDistractions,
+  };
+}
+
+function renderRetro() {
+  if (!shouldShowRetro()) return;
+  const overlay = document.getElementById('retro-overlay');
+  const card = document.getElementById('retro-card');
+  const stats = calcRetroStats();
+  const wk = getWeekKey();
+
+  card.innerHTML = `
+    <div class="retro-title">Ретроспектива — неделя ${wk.split('-W')[1]}</div>
+    <div class="retro-stats-grid">
+      <div class="retro-stat">
+        <div class="retro-stat-value">${stats.tasksCompleted}</div>
+        <div class="retro-stat-label">Задач выполнено</div>
+      </div>
+      <div class="retro-stat">
+        <div class="retro-stat-value">${stats.avgPerDay}</div>
+        <div class="retro-stat-label">Среднее / день</div>
+      </div>
+      <div class="retro-stat">
+        <div class="retro-stat-value">${stats.earlyStarts}/7</div>
+        <div class="retro-stat-label">Ранних стартов</div>
+      </div>
+      <div class="retro-stat">
+        <div class="retro-stat-value">${stats.goalsPct}%</div>
+        <div class="retro-stat-label">Цели месяца</div>
+      </div>
+      <div class="retro-stat">
+        <div class="retro-stat-value">${stats.distractions}</div>
+        <div class="retro-stat-label">Отвлечений</div>
+      </div>
+      <div class="retro-stat">
+        <div class="retro-stat-value" style="font-size:14px">${stats.bestDay}</div>
+        <div class="retro-stat-label">Лучший день</div>
+      </div>
+    </div>
+    <div class="retro-note-label">Что сработало / что изменить:</div>
+    <textarea class="retro-note" id="retro-note" placeholder="Заметки по итогам недели…" rows="3"></textarea>
+    <button class="retro-dismiss-btn" onclick="dismissRetro()">Завершить ретроспективу</button>
+  `;
+  overlay.style.display = '';
+
+  // Debounced save for note
+  let retroTimer = null;
+  document.getElementById('retro-note').addEventListener('input', e => {
+    clearTimeout(retroTimer);
+    retroTimer = setTimeout(() => {
+      const data = loadRetro();
+      if (!data[wk]) data[wk] = {};
+      data[wk].note = e.target.value;
+      saveRetro(data);
+    }, 500);
+  });
+}
+
+function dismissRetro() {
+  const data = loadRetro();
+  const wk = getWeekKey();
+  const note = document.getElementById('retro-note');
+  if (!data[wk]) data[wk] = {};
+  data[wk].stats = calcRetroStats();
+  data[wk].note = note ? note.value : '';
+  data[wk].createdAt = new Date().toISOString();
+  saveRetro(data);
+  document.getElementById('retro-overlay').style.display = 'none';
+}
+
+renderRetro();
+// Check for retro every minute
+setInterval(() => { renderRetro(); }, 60000);
+
+// ── Go Roadmap (Interactive) ─────────────────────────────────────────────
+const GO_LESSONS_KEY = 'prod_go_lessons_v1';
+const GO_TOUR_KEY = 'prod_go_tour_v1';
+const GO_CODE_KEY = 'prod_go_code_v1';
+const GO_START_KEY = 'prod_go_start_date';
+
+let currentGoTab = 'lessons';
+let expandedLesson = null;
+
+function loadGoProgress(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
+}
+function saveGoProgress(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+function getGoStartDate() {
+  let d = localStorage.getItem(GO_START_KEY);
+  if (!d) {
+    d = localDateStr(new Date());
+    localStorage.setItem(GO_START_KEY, d);
+  }
+  return d;
+}
+
+function daysSinceGoStart() {
+  const start = new Date(getGoStartDate() + 'T00:00:00');
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.floor((now - start) / 86400000);
+}
+
+function isLessonAvailable(lessonIndex) {
+  return lessonIndex <= daysSinceGoStart();
+}
+
+function toggleGoLesson(lessonId) {
+  const progress = loadGoProgress(GO_LESSONS_KEY);
+  if (progress[lessonId]) {
+    delete progress[lessonId];
+  } else {
+    progress[lessonId] = { done: true, doneAt: new Date().toISOString() };
+  }
+  saveGoProgress(GO_LESSONS_KEY, progress);
+  renderGoTab();
+}
+
+function toggleGoItem(key, itemId) {
+  const progress = loadGoProgress(key);
+  if (progress[itemId]) {
+    delete progress[itemId];
+  } else {
+    progress[itemId] = { done: true, doneAt: new Date().toISOString() };
+  }
+  saveGoProgress(key, progress);
+  renderGoTab();
+}
+
+function expandGoLesson(id) {
+  expandedLesson = expandedLesson === id ? null : id;
+  renderGoTab();
+}
+
+function setGoTab(tab) {
+  currentGoTab = tab;
+  document.querySelectorAll('.go-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  renderGoTab();
+}
+
+function renderGoTab() {
+  const container = document.getElementById('go-tab-content');
+  if (!container) return;
+
+  // Summary
+  const lp = loadGoProgress(GO_LESSONS_KEY);
+  const tp = loadGoProgress(GO_TOUR_KEY);
+  const cp = loadGoProgress(GO_CODE_KEY);
+  const totalDone = Object.keys(lp).length + Object.keys(tp).length + Object.keys(cp).length;
+  const totalItems = (typeof GO_LESSONS !== 'undefined' ? GO_LESSONS.length : 0)
+    + (typeof GO_TOUR_EXERCISES !== 'undefined' ? GO_TOUR_EXERCISES.length : 0)
+    + (typeof GO_CODE_STUDY !== 'undefined' ? GO_CODE_STUDY.length : 0);
+  const summaryEl = document.getElementById('go-progress-summary');
+  if (summaryEl) summaryEl.textContent = `${totalDone} / ${totalItems} выполнено`;
+
+  if (currentGoTab === 'lessons') renderGoLessons(container);
+  else if (currentGoTab === 'tour') renderGoTour(container);
+  else if (currentGoTab === 'code') renderGoCode(container);
+  else if (currentGoTab === 'books') renderGoBooks(container);
+}
+
+function renderGoLessons(container) {
+  if (typeof GO_LESSONS === 'undefined') { container.innerHTML = ''; return; }
+  const progress = loadGoProgress(GO_LESSONS_KEY);
+  const doneCnt = Object.keys(progress).length;
+
+  let html = `<div class="go-section-progress">
+    <span style="font-size:12px;color:var(--muted)">Syncthing уроки: ${doneCnt}/${GO_LESSONS.length}</span>
+    <div class="go-section-progress-bar">
+      <div class="go-section-progress-fill" style="width:${(doneCnt/GO_LESSONS.length*100).toFixed(0)}%;background:var(--green)"></div>
+    </div>
+  </div>`;
+
+  GO_LESSONS.forEach((lesson, i) => {
+    const isDone = !!progress[lesson.id];
+    const available = isLessonAvailable(i);
+    const isExpanded = expandedLesson === lesson.id;
+
+    if (!available) {
+      const unlockDate = new Date(getGoStartDate() + 'T00:00:00');
+      unlockDate.setDate(unlockDate.getDate() + i);
+      const dateStr = unlockDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      html += `<div class="go-lesson-item go-lesson-locked">
+        <div class="go-lesson-header">
+          <div class="go-lesson-check" style="opacity:.3">🔒</div>
+          <span class="go-lesson-num">${lesson.id}.</span>
+          <span class="go-lesson-title">${escHtml(lesson.title)}</span>
+          <span class="go-lesson-meta">откроется ${dateStr}</span>
+        </div>
+      </div>`;
+      return;
+    }
+
+    html += `<div class="go-lesson-item">
+      <div class="go-lesson-header" onclick="expandGoLesson(${lesson.id})">
+        <div class="go-lesson-check ${isDone ? 'done' : ''}" onclick="event.stopPropagation();toggleGoLesson(${lesson.id})">${isDone ? '✓' : ''}</div>
+        <span class="go-lesson-num">${lesson.id}.</span>
+        <span class="go-lesson-title ${isDone ? 'done' : ''}">${escHtml(lesson.title)}</span>
+        <span class="go-lesson-meta"><span>${lesson.time}</span></span>
+      </div>`;
+
+    if (isExpanded) {
+      html += `<div class="go-lesson-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${escHtml(lesson.goal)}</div>`;
+      (lesson.steps || []).forEach((step, si) => {
+        html += `<div class="go-step">
+          <div class="go-step-title">Шаг ${si + 1}: ${escHtml(step.title)}</div>
+          <div class="go-step-text">${escHtml(step.text)}</div>
+          ${step.code ? `<div class="go-step-code">${escHtml(step.code)}</div>` : ''}
+        </div>`;
+      });
+      if (lesson.takeaways && lesson.takeaways.length) {
+        html += `<div class="go-takeaways"><strong>Что вы узнали:</strong><br>${lesson.takeaways.map(t => '• ' + escHtml(t)).join('<br>')}</div>`;
+      }
+      if (lesson.codeToStudy && lesson.codeToStudy.length) {
+        html += `<div class="go-code-study-list"><strong>Код для изучения:</strong> ${lesson.codeToStudy.map(c => `<code>${escHtml(c)}</code>`).join(', ')}</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderGoTour(container) {
+  if (typeof GO_TOUR_EXERCISES === 'undefined') { container.innerHTML = ''; return; }
+  const progress = loadGoProgress(GO_TOUR_KEY);
+  const doneCnt = Object.keys(progress).length;
+
+  let html = `<div class="go-section-progress">
+    <span style="font-size:12px;color:var(--muted)">Go Tour упражнения: ${doneCnt}/${GO_TOUR_EXERCISES.length}</span>
+    <div class="go-section-progress-bar">
+      <div class="go-section-progress-fill" style="width:${(doneCnt/GO_TOUR_EXERCISES.length*100).toFixed(0)}%;background:var(--blue)"></div>
+    </div>
+  </div>`;
+
+  GO_TOUR_EXERCISES.forEach(ex => {
+    const isDone = !!progress[ex.id];
+    html += `<div class="go-tour-item" style="display:flex;align-items:center;gap:10px">
+      <div class="go-lesson-check ${isDone ? 'done' : ''}" onclick="toggleGoItem('${GO_TOUR_KEY}','${ex.id}')">${isDone ? '✓' : ''}</div>
+      <div style="flex:1">
+        <span style="font-size:13px;font-weight:600">${escHtml(ex.title)}</span>
+        <span style="font-size:12px;color:var(--muted);margin-left:6px">${escHtml(ex.desc)}</span>
+      </div>
+      <a class="go-tour-link" href="${ex.url}" target="_blank" rel="noopener">go.dev →</a>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderGoCode(container) {
+  if (typeof GO_CODE_STUDY === 'undefined') { container.innerHTML = ''; return; }
+  const progress = loadGoProgress(GO_CODE_KEY);
+  const doneCnt = Object.keys(progress).length;
+
+  let html = `<div class="go-section-progress">
+    <span style="font-size:12px;color:var(--muted)">Изучение кода Syncthing: ${doneCnt}/${GO_CODE_STUDY.length}</span>
+    <div class="go-section-progress-bar">
+      <div class="go-section-progress-fill" style="width:${(doneCnt/GO_CODE_STUDY.length*100).toFixed(0)}%;background:var(--yellow)"></div>
+    </div>
+  </div>`;
+
+  GO_CODE_STUDY.forEach(item => {
+    const isDone = !!progress[item.id];
+    html += `<div class="go-code-item" style="display:flex;align-items:center;gap:10px">
+      <div class="go-lesson-check ${isDone ? 'done' : ''}" onclick="toggleGoItem('${GO_CODE_KEY}','${item.id}')">${isDone ? '✓' : ''}</div>
+      <div style="flex:1">
+        <code style="font-size:13px;color:var(--cyan)">${escHtml(item.title)}</code>
+        <span style="font-size:12px;color:var(--muted);margin-left:6px">— ${escHtml(item.desc)}</span>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderGoBooks(container) {
+  if (typeof GO_BOOKS === 'undefined') { container.innerHTML = ''; return; }
+  let html = '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Рекомендуемые ресурсы по этапам изучения</div>';
+  GO_BOOKS.forEach(book => {
+    html += `<div class="go-book-item" style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:14px">📖</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${escHtml(book.title)}</div>
+        <div class="go-book-author">${escHtml(book.author)}</div>
+      </div>
+      <span class="go-book-stage">${escHtml(book.stage)}</span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Mark lesson 1 as done (completed today)
+(function() {
+  const p = loadGoProgress(GO_LESSONS_KEY);
+  if (!p[1]) {
+    p[1] = { done: true, doneAt: new Date().toISOString() };
+    saveGoProgress(GO_LESSONS_KEY, p);
+  }
+})();
+
+renderGoTab();
 
 // ── Data Export / Import ─────────────────────────────────────────────────
 function exportData() {

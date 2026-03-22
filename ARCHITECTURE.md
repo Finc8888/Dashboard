@@ -73,9 +73,12 @@ Productivity/
 │   ├── js/
 │   │   ├── auth.js           # Аутентификация: login, register, verify
 │   │   ├── app.js            # Основная логика: виджеты, TODO, расписание
+│   │   ├── training-data.js  # Загрузчик CSV: план тренировок + рекорды 5 вёрст
 │   │   └── word-of-day.js    # Слово дня: API + кэш + архив
 │   ├── data/
-│   │   └── words.json        # Словарь для "Слова дня"
+│   │   ├── words.json              # Словарь для "Слова дня"
+│   │   ├── training_schedule.csv   # → symlink / docker mount из 5run
+│   │   └── records_sorted.csv     # → symlink / docker mount из 5run
 │   └── quotes.json           # Цитаты (генерируются из markdown)
 ├── scripts/
 │   └── parse_quotes.py       # Парсер цитат
@@ -198,7 +201,7 @@ flowchart TB
     HTML --> INIT["initAuth()"]
 
     AUTH_JS -->|"fetch /api/auth/*"| AUTH_API["Auth Gateway API"]
-    APP_JS -->|"localStorage"| LS[("localStorage<br/>~15 ключей")]
+    APP_JS -->|"localStorage"| LS[("localStorage<br/>~23 ключей")]
     WOD_JS -->|"fetch"| DICT_API["Dictionary API"]
     WOD_JS -->|"fetch"| TRANS_API["MyMemory API"]
 ```
@@ -256,6 +259,10 @@ mindmap
         Dates, payday
         Edit panel
     Running Progress
+      Training Plan Target
+        Phase / Week / Progress bar
+        Today workout
+        Week schedule
       5K / 10K / Half / Marathon
       Best time + pace
       History + edit
@@ -328,10 +335,20 @@ mindmap
 | `prod_stat_go` | `number` | Счётчик Go-скриптов |
 | `prod_stat_tasks` | `number` | Счётчик рабочих задач |
 | `prod_stat_duo` | `number` | Пропуски Duolingo |
+| `prod_schedule_labels_v1` | `{index: {label, sub}}` | Пользовательские названия окон расписания |
+| `prod_reading_books_v1` | `[{id, title, author, type, subItems?}]` | Список книг для чтения (пользовательский) |
 | `prod_reading_v1` | `{bookId: {status, page, startedAt}}` | Прогресс чтения (включая sub-items сборников/трилогий) |
 | `prod_running_v1` | `{distId: [{secs, date, addedAt}]}` | Результаты бега |
 | `prod_wod_cache` | `{word, wordRu, ...}` | Кэш слова дня |
 | `prod_wod_archive_v1` | `[{word, date, ...}]` | Архив слов (90 дней) |
+| `prod_scratchpad_v1` | `{text, date, history: {date: text}}` | Быстрые заметки с историей по дням |
+| `prod_distractions_v1` | `{dateStr: [{category, time}]}` | Лог отвлечений по дням |
+| `prod_briefing_dismissed` | `"YYYY-MM-DD"` | Дата закрытия утреннего брифинга |
+| `prod_retrospective_v1` | `{weekKey: {stats, note, createdAt}}` | Еженедельные ретроспективы |
+| `prod_go_lessons_v1` | `{lessonId: {done, doneAt}}` | Прогресс уроков Syncthing |
+| `prod_go_tour_v1` | `{exerciseId: {done, doneAt}}` | Прогресс Go Tour упражнений |
+| `prod_go_code_v1` | `{itemId: {done, doneAt}}` | Прогресс изучения кода |
+| `prod_go_start_date` | `"YYYY-MM-DD"` | Дата начала Go уроков |
 
 ---
 

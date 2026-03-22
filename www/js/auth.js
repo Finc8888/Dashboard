@@ -133,6 +133,8 @@ async function handleLogin(e) {
     );
     hideAuthOverlay();
     renderUserBadge();
+    initProjectsNav();
+    if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = '';
@@ -150,6 +152,8 @@ async function handleRegister(e) {
     );
     hideAuthOverlay();
     renderUserBadge();
+    initProjectsNav();
+    if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = '';
@@ -162,7 +166,7 @@ function renderUserBadge() {
   const user = getCurrentUser();
   if (user) {
     el.innerHTML = `
-      <span class="user-badge-name">${user.username}</span>
+      <button class="user-badge-name" onclick="openWidgetSettings()" title="Настройки виджетов">${user.username}</button>
       <span class="user-badge-role">${user.role}</span>
       <button class="user-badge-logout" onclick="doLogout()" title="Выйти">&#x23FB;</button>`;
     el.style.display = 'flex';
@@ -180,6 +184,8 @@ async function initAuth() {
   if (ok) {
     hideAuthOverlay();
     renderUserBadge();
+    initProjectsNav();
+    if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
     if (redirect) {
       window.location.href = redirect;
     }
