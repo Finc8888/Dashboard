@@ -1,0 +1,334 @@
+/* ── Word of the Day ─────────────────────────────────────────────────── */
+.wod-section {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(59,130,246,.04) 0%, rgba(167,139,250,.04) 100%);
+  overflow: hidden;
+}
+.wod-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 18px 32px;
+}
+
+/* Header row */
+.wod-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.wod-header-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.wod-archive-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: inherit;
+  display: flex; align-items: center; gap: 5px;
+  transition: color .15s, border-color .15s;
+}
+.wod-archive-btn:hover,
+.wod-archive-btn.active { color: var(--blue); border-color: var(--blue); }
+
+/* Loading */
+.wod-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.wod-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+/* Content wrapper */
+.wod-content { display: block; }
+
+/* Word header */
+.wod-word-header  { margin-bottom: 16px; }
+.wod-word-main-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.wod-word {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: .3px;
+}
+.wod-word-ru {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cyan);
+  letter-spacing: .2px;
+}
+.wod-word-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+.wod-phonetic {
+  font-size: 14px;
+  color: var(--muted);
+  font-style: italic;
+}
+.wod-pos {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(59,130,246,.15);
+  color: var(--blue);
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+/* Body — 2 columns */
+.wod-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+.wod-left  { display: flex; flex-direction: column; gap: 0; }
+.wod-right {
+  border-left: 2px solid var(--border);
+  padding-left: 24px;
+}
+
+/* Block labels */
+.wod-block-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.wod-block-label-mt { margin-top: 16px; }
+
+/* Definition */
+.wod-def-en { font-size: 13px; color: var(--text); line-height: 1.55; }
+.wod-def-ru { font-size: 13px; color: var(--cyan); line-height: 1.55; font-style: italic; margin-top: 4px; }
+
+/* Synonyms */
+.wod-synonyms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.wod-syn-tag {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 4px;
+  background: rgba(59,130,246,.1);
+  color: var(--blue);
+  border: 1px solid rgba(59,130,246,.2);
+}
+
+/* Examples */
+.wod-example-item { margin-bottom: 14px; }
+.wod-example-item:last-child { margin-bottom: 0; }
+.wod-example-num {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.wod-example-en {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  font-style: italic;
+}
+.wod-example-ru {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 3px;
+}
+
+.wod-notice { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+/* Archive panel */
+.wod-archive-panel {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.wod-archive-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.wod-archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.wod-archive-list::-webkit-scrollbar       { width: 4px; }
+.wod-archive-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.wod-archive-row { display: flex; flex-direction: column; }
+.wod-archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  user-select: none;
+}
+.wod-archive-item:hover      { background: rgba(255,255,255,.03); }
+.wod-archive-item.expanded   { border-color: rgba(59,130,246,.35); border-radius: 7px 7px 0 0; background: rgba(59,130,246,.04); }
+.wod-archive-meta            { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wod-archive-word            { font-size: 14px; font-weight: 600; color: var(--text); }
+.wod-archive-word-ru         { font-size: 13px; color: var(--cyan); }
+.wod-archive-pos {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(59,130,246,.12);
+  color: var(--blue);
+}
+.wod-archive-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+.wod-archive-detail {
+  padding: 14px 16px;
+  border: 1px solid rgba(59,130,246,.25);
+  border-top: none;
+  border-radius: 0 0 7px 7px;
+  background: rgba(59,130,246,.03);
+}
+.wod-archive-def-en { font-size: 13px; color: var(--text); line-height: 1.5; }
+.wod-archive-def-ru { font-size: 13px; color: var(--cyan); font-style: italic; line-height: 1.5; margin-top: 4px; }
+.wod-archive-syns   { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.wod-archive-examples { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.wod-archive-ex-en { font-size: 12px; color: var(--text); font-style: italic; line-height: 1.5; }
+.wod-archive-ex-ru { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+.wod-archive-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .wod-body   { grid-template-columns: 1fr; }
+  .wod-right  { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 14px; }
+  .wod-inner  { padding: 16px; }
+}
+@media (max-width: 480px) {
+  .wod-inner { padding: 12px; }
+  .wod-word { font-size: 22px; }
+  .wod-word-ru { font-size: 18px; }
+  .wod-word-main-row { gap: 8px; }
+  .wod-archive-meta { gap: 6px; }
+  .wod-archive-item { padding: 8px 10px; }
+}
+
+
+/* ── WoD example editing ──────────────────────────────────────────────── */
+.wod-example-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.wod-example-edit-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+}
+.wod-example-item:hover .wod-example-edit-btn { opacity: 1; }
+.wod-example-edit-btn:hover { color: var(--cyan); }
+.wod-example-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+.wod-example-edit-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.wod-example-edit-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  width: 100%;
+  transition: border-color .15s;
+}
+.wod-example-edit-input:focus { border-color: var(--cyan); }
+.wod-example-edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.wod-example-save-btn {
+  background: rgba(6,182,212,.15);
+  border: 1px solid rgba(6,182,212,.3);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: var(--cyan);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.wod-example-save-btn:hover { background: rgba(6,182,212,.25); }
+.wod-example-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.wod-example-cancel-btn:hover { color: var(--text); border-color: var(--muted); }

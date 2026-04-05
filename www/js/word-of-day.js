@@ -378,3 +378,13 @@ function setWodError(msg) {
 
 // Запуск
 document.addEventListener('DOMContentLoaded', initWordOfDay);
+
+// ── Registration ────────────────────────────────────────────────────────
+if (typeof registerWidget === 'function') {
+  registerWidget({
+    id: 'wod',
+    label: 'Слово дня',
+    zone: 'top',
+    storageKeys: ['prod_wod_cache', 'prod_wod_archive_v1'],
+  });
+}

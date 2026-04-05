@@ -28,13 +28,34 @@
 ├── DashboardCaddyfile         # Внутренний Caddyfile для Dashboard
 ├── www/
 │   ├── index.html             # SPA: auth overlay + main content
-│   ├── blog-wrapper.html      # iframe-обёртка для блога
-│   ├── css/style.css          # Единый файл стилей
+│   ├── blog-wrapper.html      # iframe-обёртка для блога (Hugo не поддерживает nav)
+│   ├── 403.html               # Страница 403 — нет прав доступа к проекту
+│   ├── css/
+│   │   ├── core.css           # Переменные, анимации, grid, header, footer, responsive
+│   │   ├── panels.css         # Модальные окна, настройки виджетов, admin
+│   │   └── widgets/           # Стили каждого виджета (по файлу)
 │   └── js/
+│       ├── core/
+│       │   ├── utils.js           # uid(), escHtml(), todayStr(), showToast()
+│       │   ├── widget-manager.js  # WidgetRegistry, registerWidget(), loadWidgetConfig(), applyWidgetConfig()
+│       │   ├── projects.js        # Навигация по проектам
+│       │   ├── clock-notif.js     # Часы + уведомления
+│       │   ├── zen-mode.js        # Zen mode, day-off
+│       │   ├── keyboard.js        # Горячие клавиши
+│       │   ├── briefing.js        # Утренний брифинг + ретроспектива
+│       │   └── export-import.js   # exportData(), importData()
+│       ├── widgets/               # Один виджет = один файл с registerWidget()
+│       │   └── widgets-config.json # Единый конфиг виджетов (label, zone, storageKeys, defaults)
+│       ├── data/
+│       │   ├── go-data.js         # Данные Go-уроков
+│       │   └── training-data.js   # План тренировок + рекорды
+│       ├── app.js             # Тонкий оркестратор (roundRect polyfill)
 │       ├── auth.js            # Модуль аутентификации
-│       ├── app.js             # Основной JS (виджеты, TODO, цели, статистика, чтение)
-│       ├── training-data.js   # Загрузчик CSV: план тренировок + рекорды 5 вёрст
 │       └── word-of-day.js     # Слово дня
+├── tests/                     # Jest UI тесты Dashboard (make test)
+│   ├── Dockerfile             # Docker-контейнер для тестов
+│   ├── package.json           # Jest + jsdom зависимости
+│   └── src/                   # Тесты (core/, widgets/)
 ├── plans/
 │   ├── productivity.md        # Основной план продуктивности
 │   ├── golang-learning.md     # План изучения Go
@@ -127,12 +148,16 @@
 - Помогай заполнять, анализировать паттерны, замечать прогресс
 - Если энергия несколько дней подряд ниже 5 — предложи пересмотреть нагрузку, не добавлять
 
-### При работе с аутентификацией
+### При работе с аутентификацией и авторизацией
 - Auth Gateway — отдельный проект в `../Auth-Gateway/`
 - Единый docker-compose запускает всё: `make up` (core) или `make up-all` (все проекты)
 - JWT хранится в HttpOnly cookie `auth_token` — не в localStorage
 - Роли: `admin` (полный доступ + админка), `user` (только Dashboard + проекты)
-- Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` от Caddy forward_auth
+- Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username` от Caddy forward_auth
+- Все downstream-проекты хранят `auth_user_id` для привязки данных к пользователю Auth Gateway
+- Job Statistics: справочники (Companies, Skills) — admin only; вакансии — привязаны к user_id
+- Gladys Chat: чаты привязаны через `auth_user_id`
+- При удалении пользователя: Auth Gateway делает soft delete + удаляет сессии; в Job Statistics вакансии остаются (ON DELETE SET NULL)
 
 ### При работе с чтением и reading/list.md
 - Трекер прогресса — `reading/list.md`: статус (⬜/🔄/✅), страница, журнал дат
@@ -157,6 +182,13 @@
 - При добавлении нового ключа в localStorage — обновить таблицу в ARCHITECTURE.md секция 6.4
 - При добавлении/удалении виджета — обновить mindmap в ARCHITECTURE.md секция 6.3
 - Убедиться что export/import (`exportData`/`importData`) корректно обрабатывает все ключи localStorage
+
+### При изменении подходов к созданию виджетов или проектов
+- Если изменился порядок шагов, появился новый подводный камень или устарел старый подход:
+  - `docs/widget-guide.md` — обновить если изменилась структура виджетов: `widgets-config.json`, `registerWidget`, `reorderWidgets`, `applyWidgetVisibility`, паттерн localStorage, export/import
+  - `docs/project-registration-guide.md` — обновить если изменился `PROJECTS`, `PROJECT_PERMISSIONS`, схема Caddyfile для проектов, или паттерн разрешений Auth Gateway
+  - `docs/new-project-guide.md` — обновить если изменился типовой стек нового проекта (Go-структура, MobX-паттерны, схема DB, Auth Gateway интеграция, Caddy-маршруты)
+- При добавлении нового проекта в `PROJECTS` — убедиться что он задокументирован в `ARCHITECTURE.md`
 
 ---
 

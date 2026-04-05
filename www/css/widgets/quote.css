@@ -1,0 +1,62 @@
+/* ── Quote Banner ────────────────────────────────────────────────────── */
+#quote-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 32px;
+  background: linear-gradient(90deg, rgba(167,139,250,.08) 0%, rgba(6,182,212,.08) 100%);
+  border-bottom: 1px solid rgba(167,139,250,.2);
+  position: relative;
+  overflow: hidden;
+}
+#quote-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(167,139,250,.04), transparent 60%);
+  pointer-events: none;
+}
+.quote-icon { font-size: 22px; flex-shrink: 0; opacity: .7; margin-top: 2px; }
+.quote-body { flex: 1; }
+.quote-text {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.5;
+}
+.quote-text::before { content: '«'; color: var(--purple); }
+.quote-text::after  { content: '»'; color: var(--purple); }
+.quote-expl {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.quote-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.quote-next-btn {
+  font-size: 11px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.quote-next-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+.quote-countdown { font-size: 11px; color: var(--border); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 700px) {
+  #quote-banner { padding: 12px 16px; gap: 10px; }
+}
+@media (max-width: 480px) {
+  #quote-banner { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+  .quote-text { font-size: 13px; }
+  .quote-meta { flex-direction: row; align-items: center; width: 100%; gap: 8px; }
+}

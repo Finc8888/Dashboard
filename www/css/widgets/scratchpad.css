@@ -1,0 +1,62 @@
+/* ── Scratchpad ──────────────────────────────────────────────────── */
+.scratchpad-card { position: relative; }
+.scratchpad-actions { display: flex; gap: 8px; }
+.scratchpad-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.scratchpad-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+.scratchpad-textarea {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace, system-ui;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 64px;
+  margin-top: 10px;
+}
+.scratchpad-textarea:focus { outline: none; border-color: var(--cyan); }
+.scratchpad-textarea::placeholder { color: var(--muted); }
+.scratchpad-status {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  min-height: 16px;
+}
+.scratchpad-history {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.scratchpad-history-day {
+  margin-bottom: 10px;
+}
+.scratchpad-history-date {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.scratchpad-history-text {
+  font-size: 13px;
+  color: var(--text);
+  white-space: pre-wrap;
+  background: var(--bg);
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .scratchpad-actions { flex-wrap: wrap; gap: 4px; }
+  .scratchpad-btn { font-size: 11px; padding: 2px 8px; }
+}

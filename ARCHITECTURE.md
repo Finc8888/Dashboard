@@ -67,23 +67,60 @@ Productivity/
 ├── .env.example              # Шаблон переменных окружения
 ├── www/                      # Статические файлы Dashboard
 │   ├── index.html            # SPA: auth overlay + main content
-│   ├── blog-wrapper.html     # iframe-обёртка для блога
+│   ├── blog-wrapper.html     # iframe-обёртка для блога (Hugo не поддерживает nav)
+│   ├── 403.html              # Страница 403 — нет прав доступа к проекту
 │   ├── css/
-│   │   └── style.css         # Единый файл стилей (~1700 строк)
+│   │   ├── core.css          # Переменные, анимации, grid, header, footer, responsive
+│   │   ├── panels.css        # Модальные окна, настройки виджетов, admin
+│   │   └── widgets/          # Стили каждого виджета (по файлу)
+│   │       ├── quote.css … ai-assistant.css
+│   │       └── server-build.css
 │   ├── js/
+│   │   ├── core/
+│   │   │   ├── utils.js          # uid(), escHtml(), todayStr(), fmtDate(), showToast()
+│   │   │   ├── widget-manager.js # WidgetRegistry, registerWidget(), visibility, reorder
+│   │   │   ├── projects.js       # Навигация по проектам
+│   │   │   ├── clock-notif.js    # Часы + уведомления
+│   │   │   ├── zen-mode.js       # Zen mode, day-off, scroll arrows
+│   │   │   ├── keyboard.js       # Горячие клавиши
+│   │   │   ├── briefing.js       # Утренний брифинг + ретроспектива
+│   │   │   └── export-import.js  # exportData(), importData()
+│   │   ├── widgets/              # Каждый виджет — отдельный файл с registerWidget()
+│   │   │   ├── quote.js          personal-bar.js    running.js
+│   │   │   ├── schedule.js       todo.js            stickers.js
+│   │   │   ├── weekend-plan.js   principles.js      key-skills.js
+│   │   │   ├── goals.js          stats.js           reading.js
+│   │   │   ├── productivity.js   go-roadmap.js      scratchpad.js
+│   │   │   ├── server-build.js   ai-assistant.js
+│   │   │   └── (каждый вызывает registerWidget() в конце)
+│   │   ├── data/
+│   │   │   ├── go-data.js        # Данные Go-уроков
+│   │   │   └── training-data.js  # Загрузчик CSV: план тренировок + рекорды
+│   │   ├── app.js            # Тонкий оркестратор (roundRect polyfill)
 │   │   ├── auth.js           # Аутентификация: login, register, verify
-│   │   ├── app.js            # Основная логика: виджеты, TODO, расписание
-│   │   ├── training-data.js  # Загрузчик CSV: план тренировок + рекорды 5 вёрст
 │   │   └── word-of-day.js    # Слово дня: API + кэш + архив
 │   ├── data/
 │   │   ├── words.json              # Словарь для "Слова дня"
+│   │   ├── dashboard-data-default.json  # Дефолтные данные для новых пользователей
 │   │   ├── training_schedule.csv   # → symlink / docker mount из 5run
 │   │   └── records_sorted.csv     # → symlink / docker mount из 5run
 │   └── quotes.json           # Цитаты (генерируются из markdown)
+├── tests/                    # Jest UI тесты Dashboard
+│   ├── Dockerfile            # Docker-контейнер для тестов
+│   ├── package.json          # Jest + jsdom зависимости
+│   ├── jest.config.js        # Конфигурация Jest
+│   └── src/                  # Тесты
+│       ├── setup.js          # Глобальные моки (fetch, AudioContext, confirm)
+│       ├── helpers.js        # Загрузчик JS-файлов Dashboard в jsdom
+│       ├── core/             # Тесты core модулей
+│       └── widgets/          # Тесты виджетов (CRUD, render, registration)
 ├── scripts/
 │   └── parse_quotes.py       # Парсер цитат
 ├── docs/
-│   └── auth-architecture.md  # Документация auth-архитектуры
+│   ├── auth-architecture.md  # Документация auth-архитектуры
+│   ├── widget-guide.md       # Руководство по созданию нового виджета
+│   ├── project-registration-guide.md  # Руководство по регистрации проектов
+│   └── new-project-guide.md  # Руководство по созданию нового проекта
 └── CLAUDE.md                 # Инструкции для AI-ассистента
 ```
 
@@ -145,20 +182,33 @@ flowchart TB
     /api/health          → auth-gateway:8080     (probe)
     /api/admin/*         → auth-gateway:8080     (protected middleware)
 
-    /admin/*             → auth-admin:80         (strip /admin)
+    /admin/*             → auth-admin:80         (strip /admin, perm: admin)
     /admin               → /admin/ (redirect)
 
-    /blog/               → /srv/www/blog-wrapper.html (iframe)
+    /blog/               → /srv/www/blog-wrapper.html (iframe, perm: blog)
     /blog                → /blog/ (redirect)
-    /blog-raw/*          → gladys-blog:443       (strip /blog-raw, TLS skip verify)
+    /blog-raw/*          → gladys-blog:80        (strip /blog-raw)
     /blog-raw            → /blog-raw/ (redirect)
 
+    /blog-admin/api/*    → blog-admin:8083       (strip /blog-admin, role: admin)
+    /blog-admin/*        → blog-admin:8083       (strip /blog-admin, role: admin)
+    /blog-admin          → /blog-admin/ (redirect)
+
     /jobs/api/*          → job-stats-api:8081    (strip /jobs)
-    /jobs/*              → job-stats-frontend:3000 (strip /jobs)
+    /jobs/*              → job-stats-frontend:3000 (strip /jobs, perm: jobs)
     /jobs                → /jobs/ (redirect)
+
+    /chat/api/*          → gladys-chat-api:8082  (strip /chat)
+    /chat/ws             → gladys-chat-api:8082  (strip /chat, WebSocket)
+    /chat/*              → gladys-chat-frontend:80 (strip /chat, perm: chat)
+    /chat                → /chat/ (redirect)
 
     /*                   → dashboard:80          (default, catch-all)
 }
+
+Контроль доступа на уровне Caddy (forward_auth + header_regexp X-Auth-Permissions):
+- 401 (нет JWT) → redirect на /?redirect={path} → Dashboard показывает форму входа/регистрации
+- Нет permission → Caddy отдаёт /srv/www/403.html (статическая страница)
 ```
 
 ### 5.2 Диаграмма маршрутизации
@@ -174,9 +224,15 @@ flowchart LR
     CADDY -->|"/blog-raw/*"| BLOG["Gladys Blog<br/>:443"]
     CADDY -->|"/jobs/api/*"| JOBS_API["Job Stats API<br/>:8081"]
     CADDY -->|"/jobs/*"| JOBS_FE["Job Stats FE<br/>:3000"]
+    CADDY -->|"/chat/api/*"| CHAT_API["Chat API<br/>:8082"]
+    CADDY -->|"/chat/ws"| CHAT_API
+    CADDY -->|"/chat/*"| CHAT_FE["Chat FE<br/>:80"]
     CADDY -->|"/*"| DASH["Dashboard<br/>:80"]
 
     WRAPPER -->|"iframe src"| BLOG
+
+    CADDY -.->|"401"| REDIR["/?redirect={path}<br/>→ Dashboard login"]
+    CADDY -.->|"no perm"| DENY["/403.html"]
 ```
 
 ### 5.3 HTTP Headers
@@ -195,43 +251,69 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    HTML["index.html"] --> AUTH_JS["auth.js<br/>checkAuth, login, register<br/>renderAuthForm, initAuth"]
-    HTML --> APP_JS["app.js<br/>Виджеты, TODO, Schedule<br/>Running, Mortgage, Goals"]
-    HTML --> WOD_JS["word-of-day.js<br/>fetchWordData, translate<br/>cache, archive"]
+    HTML["index.html"]
+    HTML --> UTILS["core/utils.js<br/>uid, escHtml, todayStr, showToast"]
+    HTML --> WM["core/widget-manager.js<br/>WidgetRegistry, registerWidget<br/>visibility, reorder, settings<br/>loadWidgetConfig, applyWidgetConfig"]
+    HTML --> DATA["data/go-data.js<br/>data/training-data.js"]
+    HTML --> WIDGETS["widgets/*.js (17 файлов)<br/>Каждый вызывает registerWidget()"]
+    HTML --> WCFG["widgets/widgets-config.json<br/>label, zone, storageKeys, defaults"]
+    HTML --> CORE["core/projects.js, clock-notif.js<br/>zen-mode.js, keyboard.js<br/>briefing.js, export-import.js"]
+    HTML --> APP["app.js<br/>roundRect polyfill"]
+    HTML --> AUTH_JS["auth.js<br/>checkAuth, login, register<br/>initAuth → rerenderAllWidgets"]
+    HTML --> WOD["word-of-day.js<br/>fetchWordData, translate, archive"]
     HTML --> INIT["initAuth()"]
 
+    WIDGETS -->|"registerWidget({id, render, init})"| WM
+    WM -->|"fetch"| WCFG
+    WM -->|"applyWidgetConfig()<br/>merge label, zone, storageKeys"| WM
+    WM -->|"localStorage"| LS[("localStorage<br/>~30 ключей")]
     AUTH_JS -->|"fetch /api/auth/*"| AUTH_API["Auth Gateway API"]
-    APP_JS -->|"localStorage"| LS[("localStorage<br/>~23 ключей")]
-    WOD_JS -->|"fetch"| DICT_API["Dictionary API"]
-    WOD_JS -->|"fetch"| TRANS_API["MyMemory API"]
+    WOD -->|"fetch"| DICT_API["Dictionary API"]
+    WOD -->|"fetch"| TRANS_API["MyMemory API"]
 ```
 
 ### 6.2 Порядок инициализации
 
+Порядок `<script>` тегов:
+1. `core/utils.js` → `core/widget-manager.js` (всегда первые)
+2. `data/*.js` (данные)
+3. `widgets/*.js` (каждый вызывает `registerWidget()` при загрузке)
+4. `core/projects.js`, `core/clock-notif.js`, `core/zen-mode.js`, `core/keyboard.js`, `core/briefing.js`, `core/export-import.js`
+5. `app.js` → `auth.js` → `word-of-day.js` → `initAuth()`
+
 ```mermaid
 sequenceDiagram
     participant B as Browser
+    participant WM as widget-manager.js
+    participant W as widgets/*.js
+    participant WCFG as widgets-config.json
     participant A as auth.js
-    participant M as app.js
-    participant W as word-of-day.js
+    participant WOD as word-of-day.js
 
+    B->>WM: load (WidgetRegistry = [])
+    B->>W: load widgets (registerWidget({id, render, init}) × 17)
     B->>A: load auth.js
-    B->>M: load app.js (виджеты рендерятся сразу)
-    B->>W: load word-of-day.js
+    B->>WOD: load word-of-day.js
     B->>A: initAuth()
 
-    A->>A: renderAuthForm() (готовим overlay)
+    A->>A: renderAuthForm()
     A->>A: checkAuth() → GET /api/auth/me
     alt Авторизован
         A->>A: hideAuthOverlay()
         A->>A: renderUserBadge()
-        Note over B: Контент уже отрендерен в app.js
+        A->>A: applyDefaultsIfNewUser()
+        A->>WM: loadDefaults() + loadWidgetConfig()
+        WM->>WCFG: fetch widgets-config.json
+        WCFG-->>WM: [{id, label, zone, storageKeys, defaults}]
+        A->>WM: applyWidgetConfig() → merge into WidgetRegistry
+        A->>WM: applyWidgetVisibility()
+        A->>WM: rerenderAllWidgets() → каждый w.render()
+        A->>WM: initAllWidgets() → каждый w.init()
     else Не авторизован
         A->>A: showAuthOverlay()
-        Note over B: Контент скрыт за overlay
     end
 
-    W->>W: DOMContentLoaded → initWordOfDay()
+    WOD->>WOD: DOMContentLoaded → initWordOfDay()
 ```
 
 ### 6.3 Компоненты Dashboard
@@ -241,6 +323,8 @@ mindmap
   root((Dashboard))
     Header
       Notifications toggle
+      Focus mode (F)
+      Day off toggle (O)
       Live Clock
       User Badge + Logout
     Projects Nav
@@ -283,6 +367,22 @@ mindmap
       Current task marker
       Carry-over badges
       History panel
+    Sticker Board
+      Add / Edit / Delete
+      Check off (strikethrough)
+      Color picker per sticker
+      No stats tracking
+    Weekend Plan
+      Day off toggle (O)
+      Hides TODO + Productivity
+      Add / Edit / Delete / Reorder
+      Check off (no stats)
+      Fullscreen mode
+    Key Skills
+      Select from Jobs API
+      Category color coding
+      Link to Jobs skill page
+      localStorage persistence
     Monthly Goals
       Add / Edit / Delete
       Auto carry-over
@@ -310,6 +410,19 @@ mindmap
       Page tracking
       Progress bar
       Expandable sub-items (сборники/трилогии)
+    Server Build
+      Editable components table (CRUD)
+      Status workflow (выбираю → выбрано → в корзине → заказано → куплено)
+      Compatible Ollama models table (CRUD)
+      Auto-calculated total price
+    AI Assistant
+      Ollama integration (configurable URL + model)
+      Voice input (Web Speech API, ru-RU)
+      Text input with auto-resize
+      Auto-context from localStorage
+      Markdown rendering
+      Chat history (last 10 messages)
+      Connection status indicator
     Quote Banner
       Hourly rotation
       Shuffle
@@ -318,7 +431,31 @@ mindmap
       Export / Import data
 ```
 
-### 6.4 Хранилище данных (localStorage)
+### 6.4 Адаптивный дизайн (Responsive)
+
+**Принцип:** страница никогда не имеет горизонтального скролла (`body`, `#main-content` — `overflow-x: hidden`). Каждый отдельный виджет при необходимости показывает собственный горизонтальный скролл (`.card, .widget, .stat` — `overflow-x: auto; min-width: 0`).
+
+**Breakpoints:**
+| Breakpoint | Назначение |
+|-----------|------------|
+| `≤ 900px` | Сетка → 1 колонка, уменьшенные отступы, Go-табы со скроллом |
+| `≤ 700px` | Навигация проектов: скрыты описания, горизонтальный скролл |
+| `≤ 500px` | Карточки: меньше padding/border-radius, footer компактнее |
+| `≤ 480px` | Мобильный: все виджеты адаптированы (компактные шрифты, flex-wrap, видимые действия на touch) |
+
+**Overflow containment** (full-width секции):
+- `.running-section` — `overflow: hidden`
+- `.wod-section` — `overflow: hidden`
+- `#quote-banner` — `overflow: hidden`
+- `.personal-bar, footer` — `overflow: hidden; min-width: 0`
+- `.full-width` — `min-width: 0`
+
+**CSS-файлы:**
+- `css/core.css` — глобальные overflow-правила, grid responsive, header/footer mobile
+- `css/panels.css` — навигация проектов (горизонтальный скролл), модалки, auth-card responsive
+- `css/widgets/*.css` — каждый виджет имеет свои `@media (max-width: 480px)` правила
+
+### 6.5 Хранилище данных (localStorage)
 
 | Ключ | Тип | Описание |
 |------|-----|----------|
@@ -326,8 +463,12 @@ mindmap
 | `prod_cushions` | `number` | Финансовые подушки |
 | `prod_mortgage_v1` | `{payment, debt, rate, ...}` | Ипотека |
 | `prod_notif_enabled` | `"0"\|"1"` | Уведомления вкл/выкл |
+| `prod_zen_mode` | `"0"\|"1"` | Фокус-режим вкл/выкл |
+| `prod_day_off` | `"0"\|"1"` | Режим выходного дня вкл/выкл |
 | `prod_tasks_v1` | `[{id, text, done, current, ...}]` | Задачи |
 | `prod_history_v1` | `[{id, text, addedAt, doneAt, workedMs}]` | История задач |
+| `prod_stickers_v1` | `[{id, text, done, color, createdAt}]` | Доска напоминаний (стикеры) |
+| `prod_weekend_tasks_v1` | `[{id, text, done}]` | План выходного дня (только Сб/Вс) |
 | `prod_monthly_goals_v2` | `{monthKey: [{id, text, icon, done, recurring?, carriedFrom?}]}` | Цели на месяц (по ключу YYYY-MM) |
 | `prod_yearly_goals_v2` | `{yearKey: [{id, text, icon, done, recurring?, carriedFrom?}]}` | Цели на год (по ключу YYYY) |
 | `prod_daily_snapshot_v1` | `{dateStr: {completed, remaining, totalMs, ...}}` | Снимки продуктивности по дням |
@@ -349,6 +490,12 @@ mindmap
 | `prod_go_tour_v1` | `{exerciseId: {done, doneAt}}` | Прогресс Go Tour упражнений |
 | `prod_go_code_v1` | `{itemId: {done, doneAt}}` | Прогресс изучения кода |
 | `prod_go_start_date` | `"YYYY-MM-DD"` | Дата начала Go уроков |
+| `prod_key_skills_v1` | `[{id, name, category}]` | Ключевые навыки (связь с Jobs) |
+| `prod_ai_history_v1` | `[{role, content, timestamp}]` | История чата AI ассистента |
+| `prod_server_build_v1` | `[{id, component, model, price, link, status}]` | Компоненты серверной сборки (CRUD) |
+| `prod_server_models_v1` | `[{id, name, size, vram, speed, quality}]` | Совместимые модели Ollama (CRUD) |
+| `prod_ai_ollama_url` | `string` | URL Ollama сервера (default: `http://localhost:11434`) |
+| `prod_ai_model` | `string` | Модель Ollama (default: `gemma3:4b`) |
 
 ---
 
@@ -446,7 +593,7 @@ flowchart TB
 | Профиль | Сервисы | Команда |
 |---------|---------|---------|
 | (default) | gateway, dashboard, auth-gateway, auth-admin, auth-db | `make up` |
-| `blog` | + gladys-blog | `make up-blog` |
+| `blog` | + gladys-blog, blog-admin | `make up-blog` |
 | `jobs` | + job-stats-frontend, job-stats-api, job-stats-db | `make up-jobs` |
 | `blog` + `jobs` | Все сервисы | `make up-all` |
 
@@ -458,6 +605,8 @@ flowchart TB
 | `caddy_config` | Named | gateway | /config |
 | `auth_data` | Named | auth-db | /var/lib/mysql |
 | `jobs_data` | External | job-stats-db | /var/lib/mysql |
+| `blog_content` | Named | blog-admin | /blog |
+| `blog_public` | Named | blog-admin (rw), gladys-blog (ro) | /blog/public, /usr/share/nginx/html |
 | `./www` | Bind (ro) | gateway, dashboard | /srv/www |
 | `./Caddyfile` | Bind (ro) | gateway | /etc/caddy/Caddyfile |
 
@@ -489,10 +638,9 @@ flowchart LR
 ### 9.2 Чеклист добавления проекта
 
 1. **Docker Compose:** добавить сервис, подключить к `gateway` network, указать profile
-2. **Caddyfile:** добавить `handle /path/*` с `uri strip_prefix` и `reverse_proxy`
-3. **Dashboard `app.js`:** добавить объект в массив `PROJECTS`
-4. **Навигация:** в подпроекте добавить "← Dashboard" ссылку при обнаружении gateway-режима
-5. **API URL:** в подпроекте реализовать определение `basename` / API URL по `window.location.pathname`
+2. **Caddyfile:** добавить `handle /path/*` с `route { forward_auth + handle_response @unauthed + header_regexp permission check + 403 fallback }`
+3. **Dashboard `app.js`:** добавить объект в `PROJECTS` и permission в `PROJECT_PERMISSIONS`
+4. **API URL:** в подпроекте реализовать определение `basename` / API URL по `window.location.pathname`
 
 ### 9.3 Паттерн обнаружения Gateway-режима
 
@@ -511,26 +659,52 @@ function isGatewayMode() {
 
 ---
 
-## 10. Блог-обёртка (iframe pattern)
+## 10. Контроль доступа к проектам (Caddy-level)
+
+Caddy проверяет доступ на уровне Gateway через `forward_auth` + `header_regexp X-Auth-Permissions`:
 
 ```mermaid
 flowchart TB
-    subgraph Page["blog-wrapper.html"]
-        NAV["<div class='blog-nav'><br/>← Dashboard | Gladys Blog"]
-        IFRAME["<iframe src='/blog-raw/'/>"]
-    end
+    REQ["GET /jobs/"] --> FA["forward_auth<br/>/api/auth/verify"]
 
-    subgraph Caddy["Caddyfile"]
-        R1["/blog/ → serve blog-wrapper.html"]
-        R2["/blog-raw/* → reverse_proxy gladys-blog:443"]
-    end
+    FA -->|"401 (нет JWT)"| REDIR["handle_response:<br/>redir /?redirect=/jobs/"]
+    FA -->|"200 + headers"| CHECK["header_regexp<br/>X-Auth-Permissions"]
 
-    NAV --> |"href='/'"| DASH["Dashboard"]
-    IFRAME --> |"src"| R2
-    R2 --> BLOG["Gladys Blog<br/>(Hugo + Nginx)"]
+    CHECK -->|"содержит 'jobs'"| PROXY["reverse_proxy<br/>job-stats-frontend:3000"]
+    CHECK -->|"не содержит"| DENY["file_server<br/>/403.html"]
+
+    REDIR --> DASH["Dashboard<br/>форма входа/регистрации"]
+    DASH -->|"после логина"| REQ
 ```
 
-**Зачем iframe:** Стили блога (GitHub-style тема) конфликтуют с Dashboard CSS. iframe обеспечивает полную изоляцию стилей, при этом навигационная панель принадлежит Dashboard.
+| Маршрут | Permission | Действие при наличии | Действие при отсутствии |
+|---------|-----------|---------------------|----------------------|
+| `/admin/*` | `admin` | reverse_proxy auth-admin:80 | 403.html |
+| `/blog/` | `blog` | serve blog-wrapper.html | 403.html |
+| `/jobs/*` | `jobs` | reverse_proxy job-stats-frontend:3000 | 403.html |
+| `/chat/*` | `chat` | reverse_proxy gladys-chat-frontend:80 | 403.html |
+
+**Блог — исключение:** использует iframe-обёртку (`blog-wrapper.html`), т.к. Hugo не поддерживает навигацию "← Dashboard". Остальные проекты (React/Go SPA) проксируются напрямую.
+
+**Регистрация:** единая через Auth Gateway. После `/?redirect={path}` Dashboard показывает форму входа/регистрации, после успешной авторизации — redirect обратно на проект. Все пользователи доступны в админке.
+
+### Связь downstream-проектов с Auth DB
+
+| Проект | Связь с Auth DB | Описание |
+|--------|----------------|----------|
+| **Gladys Chat** | `users.auth_user_id` → Auth `users.id` | Каждый чат уникален для пользователя |
+| **Job Statistics** | `users.auth_user_id` → Auth `users.id` | Вакансии привязаны к пользователю через `jobs.user_id` |
+| **Gladys Blog** | Не требуется | Статический контент, доступ через `forward_auth` |
+
+### RBAC в Job Statistics
+
+| Сущность | GET | POST/PUT/DELETE |
+|----------|-----|----------------|
+| **Companies, Skills, Locations** | Все пользователи | Только админ (справочные данные) |
+| **Jobs** | Админ — все, user — только свои | Админ — любые, user — только свои |
+| **Stats** | Все пользователи | — (read-only) |
+
+При удалении пользователя (Auth Gateway soft delete) вакансии остаются с `user_id = NULL` (ON DELETE SET NULL) — видны только админу.
 
 ---
 
@@ -540,6 +714,7 @@ flowchart TB
 |-----|--------------|------|
 | `api.dictionaryapi.dev` | Определения слов (en) | word-of-day.js |
 | `api.mymemory.translated.net` | Перевод en→ru | word-of-day.js |
+| Ollama `/api/chat` | AI ассистент (LLM inference) | app.js |
 
 ---
 
@@ -570,18 +745,40 @@ sequenceDiagram
 ## 13. Makefile — команды управления
 
 ```makefile
-up          # Core: Dashboard + Auth Gateway
-down        # Stop all services (all profiles)
-restart     # Restart core
-logs        # Follow logs (all profiles)
-up-all      # ALL: core + blog + jobs
-up-blog     # Core + Gladys Blog
-up-jobs     # Core + Job Statistics
-quotes      # Parse quotes from markdown → quotes.json
-open        # Open Dashboard in browser
-build-auth  # Rebuild Auth Gateway containers
-clean       # Remove all volumes and containers
-status      # Show status of all services
+up              # Core: Dashboard + Auth Gateway
+down            # Stop all services (all profiles)
+restart         # Restart core
+logs            # Follow logs (all profiles)
+up-all          # ALL: core + blog + jobs + chat + sketchbook
+up-blog         # Core + Gladys Blog
+up-jobs         # Core + Job Statistics
+up-chat         # Core + Gladys Chat
+up-sketchbook   # Core + Sketchbook
+quotes          # Parse quotes from markdown → quotes.json
+open            # Open Dashboard in browser
+build-auth      # Rebuild Auth Gateway containers
+clean           # Remove all volumes and containers
+status          # Show status of all services
+
+# Job Statistics: сборка и тесты
+jobs-rebuild           # Пересобрать API + Frontend (без кэша)
+jobs-rebuild-api       # Пересобрать только API
+jobs-rebuild-frontend  # Пересобрать только Frontend
+jobs-logs              # Логи Job Statistics
+jobs-test-backend      # Unit-тесты Go backend (локально)
+jobs-test              # Jest тесты фронтенда (Docker)
+jobs-test-coverage     # Jest тесты + покрытие
+jobs-lint              # ESLint проверка
+jobs-lint-fix          # ESLint с авто-исправлением
+jobs-migrate           # Применить миграции БД
+jobs-seed              # Загрузить тестовые данные (DESTRUCTIVE)
+
+# Gladys Chat: сборка
+chat-rebuild           # Пересобрать API + Frontend (без кэша)
+chat-rebuild-api       # Пересобрать только API
+chat-rebuild-frontend  # Пересобрать только Frontend
+chat-logs              # Логи Gladys Chat
+chat-migrate           # Применить миграции БД
 ```
 
 ---

@@ -1,0 +1,205 @@
+/* ── Productivity Stats ──────────────────────────────────────────────── */
+.productivity-card {
+  margin-bottom: 4px;
+}
+
+.prod-period-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.prod-tab {
+  padding: 4px 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+}
+.prod-tab.active {
+  background: rgba(6,182,212,.12);
+  color: var(--cyan);
+  font-weight: 500;
+}
+.prod-tab:hover:not(.active) { color: var(--text); }
+
+.prod-today {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prod-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 60px;
+}
+.prod-metric-main {
+  flex-direction: row;
+  gap: 12px;
+  min-width: auto;
+  margin-right: 12px;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+}
+.prod-metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.prod-metric-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.prod-metric-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.prod-metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Circular progress ring */
+.prod-metric-ring {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  flex-shrink: 0;
+}
+.prod-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.prod-ring-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 3;
+}
+.prod-ring-fill {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray .6s ease;
+}
+.prod-ring-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chart */
+.prod-chart-wrap {
+  width: 100%;
+  position: relative;
+}
+.prod-chart-wrap canvas {
+  display: block;
+  cursor: pointer;
+}
+
+/* Day detail panel */
+.prod-day-detail {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(6,182,212,.04);
+  border: 1px solid rgba(6,182,212,.15);
+  border-radius: 8px;
+  animation: fadeSlideIn .15s ease;
+}
+.prod-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.prod-detail-date {
+  font-size: 13px;
+  font-weight: 600;
+}
+.prod-detail-pct {
+  font-size: 12px;
+  color: var(--cyan);
+  font-weight: 600;
+  background: rgba(6,182,212,.12);
+  padding: 1px 8px;
+  border-radius: 4px;
+}
+.prod-detail-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  transition: color .15s;
+}
+.prod-detail-close:hover { color: var(--red); }
+.prod-detail-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.prod-detail-stats strong { color: var(--text); }
+.prod-detail-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.prod-detail-task {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.prod-detail-task-check {
+  color: var(--green);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.prod-detail-task-time {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.prod-detail-empty {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 480px) {
+  .prod-today { gap: 12px; }
+  .prod-metric { min-width: 50px; }
+  .prod-metric-value { font-size: 18px; }
+  .prod-metric-ring { width: 44px; height: 44px; }
+  .prod-ring-value { font-size: 11px; }
+  .prod-period-tabs { border-radius: 5px; }
+  .prod-tab { padding: 3px 8px; font-size: 10px; }
+  .prod-detail-stats { flex-wrap: wrap; gap: 8px; }
+}

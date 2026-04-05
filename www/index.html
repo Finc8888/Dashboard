@@ -6,13 +6,33 @@
   <title>Productivity Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="css/core.css">
+  <link rel="stylesheet" href="css/panels.css">
+  <!-- Widget CSS -->
+  <link rel="stylesheet" href="css/widgets/quote.css">
+  <link rel="stylesheet" href="css/widgets/personal-bar.css">
+  <link rel="stylesheet" href="css/widgets/schedule.css">
+  <link rel="stylesheet" href="css/widgets/todo.css">
+  <link rel="stylesheet" href="css/widgets/stickers.css">
+  <link rel="stylesheet" href="css/widgets/weekend-plan.css">
+  <link rel="stylesheet" href="css/widgets/principles.css">
+  <link rel="stylesheet" href="css/widgets/stats.css">
+  <link rel="stylesheet" href="css/widgets/goals.css">
+  <link rel="stylesheet" href="css/widgets/wod.css">
+  <link rel="stylesheet" href="css/widgets/reading.css">
+  <link rel="stylesheet" href="css/widgets/productivity.css">
+  <link rel="stylesheet" href="css/widgets/running.css">
+  <link rel="stylesheet" href="css/widgets/scratchpad.css">
+  <link rel="stylesheet" href="css/widgets/go-roadmap.css">
+  <link rel="stylesheet" href="css/widgets/ai-assistant.css">
+  <link rel="stylesheet" href="css/widgets/server-build.css">
 </head>
 <body>
 
-<div id="auth-overlay" class="auth-overlay"></div>
+<div id="auth-overlay" class="auth-overlay" style="display:none"></div>
 
-<div id="main-content">
+<div id="main-content" style="display:none">
 
 <!-- Morning Briefing -->
 <div class="briefing-overlay" id="briefing-overlay" style="display:none">
@@ -36,6 +56,9 @@
       <div class="shortcuts-row"><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd><span>Фокус на виджет (по порядку)</span></div>
       <div class="shortcuts-row"><kbd>Space</kbd><span>Завершить текущую задачу</span></div>
       <div class="shortcuts-row"><kbd>F</kbd><span>Фокус-режим</span></div>
+      <div class="shortcuts-row"><kbd>O</kbd><span>Выходной день</span></div>
+      <div class="shortcuts-row"><kbd>T</kbd><span>TODO на весь экран</span></div>
+      <div class="shortcuts-row"><kbd>M</kbd><span>Напоминания на весь экран</span></div>
       <div class="shortcuts-row"><kbd>D</kbd><span>Отвлёкся (лог)</span></div>
       <div class="shortcuts-row"><kbd>A</kbd><span>Админ-панель</span></div>
       <div class="shortcuts-row"><kbd>W</kbd><span>Настройки виджетов</span></div>
@@ -52,12 +75,13 @@
     <h1>Productivity Dashboard</h1>
     <div class="meta">PHP → Golang · Бег · Duolingo · Чтение</div>
   </div>
-  <div style="display:flex;align-items:center;gap:16px;">
+  <div class="header-actions">
     <button class="notif-btn" id="notif-btn" onclick="toggleNotifications()">
       <span id="notif-icon">🔔</span>
       <span class="notif-label" id="notif-label">уведомления</span>
     </button>
     <button class="zen-btn" id="zen-btn" onclick="toggleZenMode()" title="Фокус-режим (F)">🎯</button>
+    <button class="zen-btn dayoff-btn" id="dayoff-btn" onclick="toggleDayOff()" title="Выходной день (O)">🏖</button>
     <div id="live-clock">00:00</div>
     <div class="user-badge" id="user-badge" style="display:none"></div>
   </div>
@@ -272,9 +296,10 @@
       <span class="todo-progress-text">
         <span class="done-count" id="todo-done-count">0</span> / <span id="todo-total-count">0</span> выполнено
       </span>
+      <button class="todo-expand-btn" id="todo-expand-btn" onclick="toggleTodoFullscreen()" title="Развернуть">⤢</button>
     </div>
     <div class="todo-input-row">
-      <input class="todo-input" id="todo-input" type="text" placeholder="Добавить задачу…" maxlength="120" />
+      <input class="todo-input" id="todo-input" type="text" placeholder="Добавить задачу…" maxlength="480" />
       <button class="todo-add-btn" id="todo-add-btn" title="Добавить (Enter)">+</button>
     </div>
     <div class="todo-list" id="todo-list"></div>
@@ -292,44 +317,75 @@
     </div>
   </div>
 
+  <!-- Доска напоминаний -->
+  <div class="card sticker-card" data-widget="stickers">
+    <div class="card-title-row">
+      <span class="card-title">Доска напоминаний</span>
+      <button class="todo-expand-btn" id="sticker-expand-btn" onclick="toggleStickerFullscreen()" title="Развернуть">⤢</button>
+    </div>
+    <div class="sticker-input-row">
+      <input class="sticker-input" id="sticker-input" type="text" placeholder="Не забыть…" maxlength="120" />
+      <button class="sticker-add-btn" id="sticker-add-btn" title="Добавить (Enter)">+</button>
+    </div>
+    <div class="sticker-board" id="sticker-board"></div>
+  </div>
+
+  <!-- План выходного дня -->
+  <div class="card wp-card" data-widget="weekend-plan">
+    <div class="card-title-row">
+      <span class="card-title">План выходного дня</span>
+      <span class="wp-progress-text">
+        <span class="done-count" id="wp-done-count">0</span> / <span id="wp-total-count">0</span> выполнено
+      </span>
+      <button class="todo-expand-btn" id="wp-expand-btn" onclick="toggleWpFullscreen()" title="Развернуть">⤢</button>
+    </div>
+    <div class="wp-input-row">
+      <input class="wp-input" id="wp-input" type="text" placeholder="Чем заняться в выходной…" maxlength="480" />
+      <button class="wp-add-btn" id="wp-add-btn" title="Добавить (Enter)">+</button>
+    </div>
+    <div class="wp-list" id="wp-list"></div>
+  </div>
+
   <!-- Принципы -->
   <div class="card" data-widget="principles">
     <div class="card-title">Ключевые принципы</div>
-    <div class="principles">
-      <div class="principle p-red">
-        <div class="principle-icon">🎯</div>
-        <div class="principle-text">
-          <strong>Одна главная задача дня</strong>
-          <span>Выполни её до обеда — всё остальное бонус</span>
-        </div>
+    <div class="principles" id="principles-list"></div>
+    <div class="principle-add-row" id="principle-add-row">
+      <button class="principle-add-btn" onclick="showPrincipleForm()">+ Добавить принцип</button>
+    </div>
+    <div class="principle-form" id="principle-form" style="display:none">
+      <input type="text" id="principle-icon-input" placeholder="Иконка" maxlength="4" />
+      <input type="text" id="principle-title-input" placeholder="Заголовок" />
+      <input type="text" id="principle-desc-input" placeholder="Описание" />
+      <select id="principle-color-input">
+        <option value="red">Красный</option>
+        <option value="yellow">Жёлтый</option>
+        <option value="green">Зелёный</option>
+        <option value="blue">Синий</option>
+        <option value="purple">Фиолетовый</option>
+        <option value="cyan">Голубой</option>
+      </select>
+      <div class="principle-form-btns">
+        <button class="principle-save-btn" onclick="savePrincipleForm()">Сохранить</button>
+        <button class="principle-cancel-btn" onclick="cancelPrincipleForm()">Отмена</button>
       </div>
-      <div class="principle p-yellow">
-        <div class="principle-icon">⏱</div>
-        <div class="principle-text">
-          <strong>Правило «2-минутного старта»</strong>
-          <span>Просто открой файл и напиши одну строку</span>
-        </div>
-      </div>
-      <div class="principle p-green">
-        <div class="principle-icon">📗</div>
-        <div class="principle-text">
-          <strong>Go через работу</strong>
-          <span>Переписывай рабочие утилиты — не абстрактные туториалы</span>
-        </div>
-      </div>
-      <div class="principle p-blue">
-        <div class="principle-icon">📵</div>
-        <div class="principle-text">
-          <strong>YouTube только 16:00–18:30</strong>
-          <span>Остальное время — блокировщик. Утро — без телефона</span>
-        </div>
-      </div>
-      <div class="principle p-purple">
-        <div class="principle-icon">🏃</div>
-        <div class="principle-text">
-          <strong>Пропуск — норма, не катастрофа</strong>
-          <span>Не добавляй интенсивность резко — это мешает сну</span>
-        </div>
+    </div>
+  </div>
+
+  <!-- Key Skills -->
+  <div class="card" data-widget="key-skills">
+    <div class="card-title">Ключевые навыки</div>
+    <div class="key-skills" id="key-skills-list"></div>
+    <div class="key-skills-add-row" id="key-skills-add-row">
+      <button class="principle-add-btn" onclick="showKeySkillPicker()">+ Добавить навык</button>
+    </div>
+    <div class="key-skills-picker" id="key-skills-picker" style="display:none">
+      <select id="key-skills-select" class="principle-form">
+        <option value="">Выберите навык...</option>
+      </select>
+      <div class="principle-form-btns">
+        <button class="principle-save-btn" onclick="addSelectedKeySkill()">Добавить</button>
+        <button class="principle-cancel-btn" onclick="cancelKeySkillPicker()">Отмена</button>
       </div>
     </div>
   </div>
@@ -401,6 +457,13 @@
         <div class="distraction-panel" id="distraction-panel" style="display:none"></div>
         <div class="distraction-weekly" id="distraction-weekly"></div>
       </div>
+      <div class="retro-history" id="retro-history">
+        <div class="retro-history-header">
+          <span class="retro-history-title">Ретроспективы</span>
+          <button class="retro-history-toggle" onclick="toggleRetroHistory()">развернуть ↓</button>
+        </div>
+        <div class="retro-history-list" id="retro-history-list" style="display:none"></div>
+      </div>
     </div>
 
     <!-- Monthly goals -->
@@ -469,6 +532,41 @@
       <div class="scratchpad-history" id="scratchpad-history" style="display:none"></div>
     </div>
 
+    <!-- Server Build -->
+    <div class="card server-build-card" data-widget="server-build">
+      <div class="card-title-row">
+        <span class="card-title">🖥️ Сборка сервера</span>
+        <div class="sb-actions">
+          <span class="sb-total" id="sb-total"></span>
+          <button class="reading-action-btn" onclick="sbAddRow()" title="Добавить компонент">+</button>
+        </div>
+      </div>
+      <div class="sb-table-wrap" id="sb-table-wrap"></div>
+      <div class="sb-models" id="sb-models">
+        <details>
+          <summary class="sb-models-toggle">Совместимые модели Ollama</summary>
+          <div class="sb-models-list" id="sb-models-list"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- AI Assistant -->
+    <div class="card ai-card" data-widget="ai-assistant">
+      <div class="card-title-row">
+        <span class="card-title">🤖 AI Ассистент</span>
+        <div class="ai-actions">
+          <span class="ai-status" id="ai-status"></span>
+          <button class="scratchpad-btn" id="ai-clear-btn" onclick="aiClearHistory()" title="Очистить историю">🗑 Очистить</button>
+        </div>
+      </div>
+      <div class="ai-messages" id="ai-messages"></div>
+      <div class="ai-input-row">
+        <textarea class="ai-input" id="ai-input" placeholder="Спроси что-нибудь о своих данных…" rows="2"></textarea>
+        <button class="ai-voice-btn" id="ai-voice-btn" onclick="aiToggleVoice()" title="Голосовой ввод">🎤</button>
+        <button class="ai-send-btn" id="ai-send-btn" onclick="aiSend()">→</button>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -485,10 +583,44 @@
 
 </div><!-- /main-content -->
 
-<script src="js/auth.js"></script>
-<script src="js/go-data.js"></script>
-<script src="js/training-data.js"></script>
+<!-- Core -->
+<script src="js/core/utils.js"></script>
+<script src="js/core/widget-manager.js"></script>
+
+<!-- Data -->
+<script src="js/data/go-data.js"></script>
+<script src="js/data/training-data.js"></script>
+
+<!-- Widgets (self-register via registerWidget) -->
+<script src="js/widgets/quote.js"></script>
+<script src="js/widgets/personal-bar.js"></script>
+<script src="js/widgets/running.js"></script>
+<script src="js/widgets/schedule.js"></script>
+<script src="js/widgets/todo.js"></script>
+<script src="js/widgets/stickers.js"></script>
+<script src="js/widgets/weekend-plan.js"></script>
+<script src="js/widgets/principles.js"></script>
+<script src="js/widgets/key-skills.js"></script>
+<script src="js/widgets/goals.js"></script>
+<script src="js/widgets/stats.js"></script>
+<script src="js/widgets/reading.js"></script>
+<script src="js/widgets/productivity.js"></script>
+<script src="js/widgets/go-roadmap.js"></script>
+<script src="js/widgets/scratchpad.js"></script>
+<script src="js/widgets/server-build.js"></script>
+<script src="js/widgets/ai-assistant.js"></script>
+
+<!-- Core (post-widget, depends on widget functions) -->
+<script src="js/core/projects.js"></script>
+<script src="js/core/clock-notif.js"></script>
+<script src="js/core/zen-mode.js"></script>
+<script src="js/core/keyboard.js"></script>
+<script src="js/core/briefing.js"></script>
+<script src="js/core/export-import.js"></script>
+
+<!-- Orchestrator + Auth -->
 <script src="js/app.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/word-of-day.js"></script>
 <script>initAuth();</script>
 </body>

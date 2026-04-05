@@ -1,0 +1,193 @@
+/* ── Sticker Board (Доска напоминаний) ───────────────────────────────── */
+.sticker-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  position: relative;
+}
+.sticker-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(255,255,255,.018) 28px,
+      rgba(255,255,255,.018) 29px
+    );
+  pointer-events: none;
+}
+
+.sticker-input-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.sticker-input {
+  flex: 1;
+  background: rgba(255,255,255,.06);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  outline: none;
+  transition: border-color .15s;
+}
+.sticker-input:focus { border-color: var(--yellow); }
+.sticker-input::placeholder { color: var(--muted); font-style: italic; }
+.sticker-add-btn {
+  background: var(--yellow);
+  border: none;
+  border-radius: 6px;
+  width: 36px; height: 36px;
+  color: #1a1d27;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.sticker-add-btn:hover { opacity: .8; }
+
+.sticker-board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0;
+  flex: 1;
+  align-content: flex-start;
+  overflow-y: auto;
+}
+.sticker-board::-webkit-scrollbar       { width: 4px; }
+.sticker-board::-webkit-scrollbar-track { background: transparent; }
+.sticker-board::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Sticker Expand / Fullscreen ──────────────────────────────────── */
+.sticker-card.sticker-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  border-radius: 0;
+  border: none;
+  overflow-y: auto;
+  padding: 32px 48px;
+  background: var(--bg);
+}
+.sticker-card.sticker-fullscreen .sticker-board {
+  max-height: none;
+  flex: 1;
+}
+.sticker-card.sticker-fullscreen .sticker-input { font-size: 15px; padding: 10px 14px; }
+.sticker-card.sticker-fullscreen .card-title { font-size: 16px; }
+
+.sticker-note {
+  --sticker-color: #f59e0b;
+  background: color-mix(in srgb, var(--sticker-color) 15%, var(--surface));
+  border-left: 3px solid var(--sticker-color);
+  border-radius: 2px 6px 6px 2px;
+  padding: 10px 12px;
+  width: calc(50% - 5px);
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+  transition: transform .15s, box-shadow .15s, opacity .2s;
+  box-shadow: 2px 2px 6px rgba(0,0,0,.25);
+  animation: stickerIn .2s ease-out;
+}
+@keyframes stickerIn {
+  from { opacity: 0; transform: scale(.92) rotate(0deg); }
+  to   { opacity: 1; }
+}
+.sticker-note:hover {
+  box-shadow: 3px 3px 10px rgba(0,0,0,.35);
+  z-index: 1;
+}
+.sticker-note.done { opacity: .55; }
+
+.sticker-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.sticker-checkbox {
+  width: 16px; height: 16px;
+  border: 2px solid var(--sticker-color);
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  margin-top: 1px;
+  color: var(--sticker-color);
+}
+.sticker-note.done .sticker-checkbox {
+  background: var(--sticker-color);
+  color: #1a1d27;
+}
+
+.sticker-text {
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+  flex: 1;
+}
+.sticker-note.done .sticker-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.sticker-edit-input {
+  flex: 1;
+  background: rgba(0,0,0,.2);
+  border: 1px solid var(--sticker-color);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.sticker-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.sticker-note:hover .sticker-actions { opacity: 1; }
+.sticker-actions button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 3px;
+  transition: color .15s;
+  line-height: 1;
+}
+.sticker-actions button:hover { color: var(--text); }
+.sticker-actions button:last-child:hover { color: var(--red); }
+
+.sticker-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  padding: 28px 0;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .sticker-note { width: 100%; }
+}
+@media (max-width: 480px) {
+  .sticker-card.sticker-fullscreen { padding: 16px; }
+  .sticker-actions { opacity: 1; }
+}

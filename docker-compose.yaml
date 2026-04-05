@@ -66,6 +66,8 @@ services:
     image: mysql:8.0
     container_name: auth-db
     restart: unless-stopped
+    ports:
+      - "7771:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${AUTH_DB_ROOT_PASSWORD:-rootsecret}
       MYSQL_DATABASE: ${AUTH_DB_NAME:-authdb}
@@ -81,17 +83,41 @@ services:
       timeout: 5s
       retries: 10
 
-  # -- Gladys Blog --
+  # -- Gladys Blog (Nginx serving Hugo output) --
   gladys-blog:
-    build: ../Gladys-Blog
+    image: nginx:alpine
     container_name: gladys-blog
     restart: unless-stopped
+    volumes:
+      - blog_public:/usr/share/nginx/html:ro
+    networks: [gateway]
+    profiles: ["blog"]
+
+  # -- Blog Admin API (CRUD + Hugo rebuild) --
+  blog-admin:
+    build:
+      context: ../Gladys-Blog
+      dockerfile: blog-admin/Dockerfile
+    container_name: blog-admin
+    restart: unless-stopped
+    environment:
+      CONTENT_DIR: /blog/content/post
+      HUGO_DIR: /blog
+      API_PORT: "8083"
+      STATIC_DIR: /app/static
+      HUGO_BASEURL: ${HUGO_BASEURL:-http://localhost/blog-raw/}
+    volumes:
+      - blog_content:/blog
+      - blog_public:/blog/public
     networks: [gateway]
     profiles: ["blog"]
 
   # -- Job Statistics Frontend --
   job-stats-frontend:
-    build: ../job-statistics-platform/frontend
+    build:
+      context: ../job-statistics-platform/frontend
+      args:
+        API_BASE_URL: ""
     container_name: job-stats-frontend
     restart: unless-stopped
     networks: [gateway]
@@ -120,6 +146,8 @@ services:
     image: mysql:8.0
     container_name: job-stats-db
     restart: unless-stopped
+    ports:
+      - "7772:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${JOBS_DB_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${JOBS_DB_NAME:-job_stats}
@@ -167,6 +195,8 @@ services:
     image: mysql:8.0
     container_name: gladys-chat-db
     restart: unless-stopped
+    ports:
+      - "7773:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${CHAT_DB_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${CHAT_DB_NAME:-gladys_chat}
@@ -176,6 +206,7 @@ services:
       - chat_data:/var/lib/mysql
       - ../Gladys-Chat/backend/migrations/001_create_tables.sql:/docker-entrypoint-initdb.d/001_create_tables.sql:ro
       - ../Gladys-Chat/backend/migrations/002_centralize_auth.sql:/docker-entrypoint-initdb.d/002_centralize_auth.sql:ro
+      - ../Gladys-Chat/backend/migrations/003_add_user_role.sql:/docker-entrypoint-initdb.d/003_add_user_role.sql:ro
     networks: [chat-internal]
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -184,6 +215,55 @@ services:
       retries: 10
     profiles: ["chat"]
 
+  # -- Sketchbook Frontend --
+  sketchbook-frontend:
+    build: ../sketchbook/frontend
+    container_name: sketchbook-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["sketchbook"]
+
+  # -- Sketchbook API --
+  sketchbook-api:
+    build: ../sketchbook/backend
+    container_name: sketchbook-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: sketchbook-db
+      DB_PORT: "3306"
+      DB_USER: ${SKETCH_DB_USER:-sketchuser}
+      DB_PASSWORD: ${SKETCH_DB_PASSWORD:-sketchpassword}
+      DB_NAME: ${SKETCH_DB_NAME:-sketchbook}
+      API_PORT: "8084"
+    networks: [gateway, sketchbook-internal]
+    depends_on:
+      sketchbook-db:
+        condition: service_healthy
+    profiles: ["sketchbook"]
+
+  # -- Sketchbook DB --
+  sketchbook-db:
+    image: mysql:8.0
+    container_name: sketchbook-db
+    restart: unless-stopped
+    ports:
+      - "7774:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SKETCH_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${SKETCH_DB_NAME:-sketchbook}
+      MYSQL_USER: ${SKETCH_DB_USER:-sketchuser}
+      MYSQL_PASSWORD: ${SKETCH_DB_PASSWORD:-sketchpassword}
+    volumes:
+      - sketchbook_data:/var/lib/mysql
+      - ../sketchbook/backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [sketchbook-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["sketchbook"]
+
 networks:
   gateway:
     name: productivity_gateway
@@ -191,12 +271,16 @@ networks:
   jobs-internal:
   chat-internal:
     name: productivity_chat-internal
+  sketchbook-internal:
 
 volumes:
   caddy_data:
   caddy_config:
   auth_data:
   chat_data:
+  blog_content:
+  blog_public:
   jobs_data:
     external: true
     name: job-statistics-platform_mysql_data
+  sketchbook_data:

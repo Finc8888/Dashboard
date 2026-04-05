@@ -59,7 +59,6 @@ function showAuthOverlay() {
 
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').style.display = 'none';
-  document.getElementById('main-content').style.display = '';
 }
 
 // Render login/register form with tab switch
@@ -134,7 +133,13 @@ async function handleLogin(e) {
     hideAuthOverlay();
     renderUserBadge();
     initProjectsNav();
+    await applyDefaultsIfNewUser();
     if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+    if (typeof rerenderAllWidgets === 'function') rerenderAllWidgets();
+    if (typeof initAllWidgets === 'function') initAllWidgets();
+    var params = new URLSearchParams(window.location.search);
+    var redirect = params.get('redirect');
+    if (redirect) window.location.href = redirect;
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = '';
@@ -153,7 +158,13 @@ async function handleRegister(e) {
     hideAuthOverlay();
     renderUserBadge();
     initProjectsNav();
+    await applyDefaultsIfNewUser();
     if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+    if (typeof rerenderAllWidgets === 'function') rerenderAllWidgets();
+    if (typeof initAllWidgets === 'function') initAllWidgets();
+    var params = new URLSearchParams(window.location.search);
+    var redirect = params.get('redirect');
+    if (redirect) window.location.href = redirect;
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = '';
@@ -165,13 +176,46 @@ function renderUserBadge() {
   if (!el) return;
   const user = getCurrentUser();
   if (user) {
+    const adminBtn = user.role === 'admin'
+      ? '<button class="user-badge-admin" onclick="openDashboardAdmin()" title="Админ-панель Dashboard">&#x2699;</button>'
+      : '';
     el.innerHTML = `
-      <button class="user-badge-name" onclick="openWidgetSettings()" title="Настройки виджетов">${user.username}</button>
-      <span class="user-badge-role">${user.role}</span>
-      <button class="user-badge-logout" onclick="doLogout()" title="Выйти">&#x23FB;</button>`;
+      <div class="user-badge-row">
+        <button class="user-badge-name" onclick="openWidgetSettings()" title="Настройки виджетов">${user.username}</button>
+        <span class="user-badge-role">${user.role}</span>
+        ${adminBtn}
+        <button class="user-badge-logout" onclick="doLogout()" title="Выйти">&#x23FB;</button>
+      </div>
+      <div id="user-ip"></div>`;
     el.style.display = 'flex';
+    fetchUserIP();
   } else {
     el.style.display = 'none';
+  }
+}
+
+function fetchUserIP() {
+  fetch('https://api.ipify.org?format=json')
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('user-ip');
+      if (el) el.textContent = 'IP: ' + d.ip;
+    })
+    .catch(() => {});
+}
+
+async function applyDefaultsIfNewUser() {
+  // Load global defaults and widget config in parallel
+  const [defaults] = await Promise.all([
+    typeof loadDefaults === 'function' ? loadDefaults() : null,
+    typeof loadWidgetConfig === 'function' ? loadWidgetConfig() : null,
+  ]);
+  // Merge widget config (label, zone, storageKeys) into WidgetRegistry
+  if (typeof applyWidgetConfig === 'function') applyWidgetConfig();
+  // Import defaults only for new users
+  if (typeof isNewUser === 'function' && isNewUser()) {
+    if (defaults && typeof importDefaults === 'function') importDefaults(defaults);
+    if (typeof importWidgetDefaults === 'function') importWidgetDefaults();
   }
 }
 
@@ -185,7 +229,10 @@ async function initAuth() {
     hideAuthOverlay();
     renderUserBadge();
     initProjectsNav();
+    await applyDefaultsIfNewUser();
     if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+    if (typeof rerenderAllWidgets === 'function') rerenderAllWidgets();
+    if (typeof initAllWidgets === 'function') initAllWidgets();
     if (redirect) {
       window.location.href = redirect;
     }

@@ -1,0 +1,62 @@
+/* ── Principles ──────────────────────────────────────────────────────── */
+.principles { display: flex; flex-direction: column; gap: 10px; }
+.principle {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-left: 3px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  background: rgba(255,255,255,.02);
+}
+.principle.p-red    { border-color: var(--red); }
+.principle.p-yellow { border-color: var(--yellow); }
+.principle.p-green  { border-color: var(--green); }
+.principle.p-blue   { border-color: var(--blue); }
+.principle.p-purple { border-color: var(--purple); }
+.principle.p-cyan   { border-color: var(--cyan); }
+.principle-icon                 { font-size: 18px; flex-shrink: 0; }
+.principle-text                 { flex: 1; min-width: 0; }
+.principle-text strong          { display: block; font-size: 13px; margin-bottom: 2px; }
+.principle-text span            { font-size: 12px; color: var(--muted); }
+.key-skill-link                 { display: block; font-size: 11px; color: var(--cyan); text-decoration: none; margin-top: 3px; opacity: .8; }
+.key-skill-link:hover           { opacity: 1; text-decoration: underline; }
+#key-skills-select              { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; margin-bottom: 8px; }
+.principle-actions              { display: flex; gap: 4px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
+.principle:hover .principle-actions { opacity: 1; }
+.principle-edit-btn, .principle-del-btn {
+  background: none; border: none; cursor: pointer; font-size: 13px; padding: 2px 4px;
+  color: var(--muted); border-radius: 4px; line-height: 1;
+}
+.principle-edit-btn:hover       { color: var(--cyan); background: rgba(6,182,212,.1); }
+.principle-del-btn:hover        { color: var(--red); background: rgba(239,68,68,.1); }
+.principle-add-row              { margin-top: 8px; }
+.principle-add-btn {
+  background: none; border: 1px dashed var(--border); color: var(--muted);
+  padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; width: 100%;
+  transition: border-color .15s, color .15s;
+}
+.principle-add-btn:hover        { border-color: var(--cyan); color: var(--cyan); }
+.principle-form {
+  display: flex; flex-direction: column; gap: 8px; margin-top: 10px;
+  padding: 12px; background: rgba(255,255,255,.03); border-radius: 8px; border: 1px solid var(--border);
+}
+.principle-form input, .principle-form select {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  padding: 7px 10px; border-radius: 6px; font-size: 13px; font-family: inherit;
+}
+.principle-form input:focus, .principle-form select:focus {
+  outline: none; border-color: var(--cyan);
+}
+#principle-icon-input           { width: 60px; text-align: center; font-size: 18px; }
+.principle-form-btns            { display: flex; gap: 8px; }
+.principle-save-btn {
+  background: var(--cyan); color: #000; border: none; padding: 7px 16px;
+  border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.principle-save-btn:hover       { opacity: .85; }
+.principle-cancel-btn {
+  background: none; color: var(--muted); border: 1px solid var(--border);
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.principle-cancel-btn:hover     { border-color: var(--muted); color: var(--text); }

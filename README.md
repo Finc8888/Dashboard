@@ -58,6 +58,25 @@ make down        # Остановить все контейнеры
 make logs        # Логи в реальном времени
 make status      # Статус контейнеров
 make clean       # Остановить + удалить volumes
+
+# Dashboard UI: тесты
+make test              # Jest тесты Dashboard UI (Docker)
+make test-coverage     # Тесты + покрытие
+
+# Job Statistics: пересборка после изменений
+make jobs-rebuild           # Пересобрать API + Frontend (без кэша)
+make jobs-rebuild-api       # Только API
+make jobs-rebuild-frontend  # Только Frontend
+make jobs-logs              # Логи Job Statistics
+
+# Job Statistics: тесты и линтер
+make jobs-test-backend      # Unit-тесты Go backend (локально)
+make jobs-test              # Jest тесты фронтенда (Docker)
+make jobs-test-coverage     # Тесты + покрытие
+make jobs-lint              # ESLint проверка
+make jobs-lint-fix          # ESLint с авто-исправлением
+make jobs-migrate           # Применить миграции БД
+make jobs-seed              # Загрузить тестовые данные (DESTRUCTIVE)
 ```
 
 ## Аутентификация
@@ -94,9 +113,16 @@ make clean       # Остановить + удалить volumes
 ├── www/
 │   ├── index.html         # SPA Dashboard
 │   ├── blog-wrapper.html  # iframe-обёртка для блога
-│   ├── css/style.css      # Стили
+│   ├── 403.html           # Страница 403
+│   ├── css/
+│   │   ├── core.css       # Переменные, grid, header, footer, responsive
+│   │   ├── panels.css     # Модалки, навигация проектов, admin
+│   │   └── widgets/       # Стили каждого виджета (по файлу)
 │   └── js/
-│       ├── app.js         # Виджеты, TODO, цели, статистика, чтение
+│       ├── core/          # utils, widget-manager, projects, keyboard и др.
+│       ├── widgets/       # Каждый виджет — отдельный файл
+│       ├── data/          # go-data.js, training-data.js
+│       ├── app.js         # Оркестратор
 │       ├── auth.js        # Аутентификация
 │       └── word-of-day.js # Слово дня
 ├── scripts/
