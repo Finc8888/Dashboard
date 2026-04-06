@@ -33,7 +33,7 @@ describe('Server Build — load / save', () => {
 describe('Server Build — sbAddRow()', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = '<div id="sb-table"></div><div id="sb-total"></div><div id="sb-models-table"></div>';
+    document.body.innerHTML = '<div id="sb-table-wrap"></div><div id="sb-total"></div><div id="sb-models-list"></div>';
   });
 
   test('adds empty row with correct structure', () => {
@@ -49,7 +49,7 @@ describe('Server Build — sbAddRow()', () => {
 describe('Server Build — sbUpdateField()', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = '<div id="sb-total"></div>';
+    document.body.innerHTML = '<div id="sb-table-wrap"></div><div id="sb-total"></div><div id="sb-models-list"></div>';
     saveServerBuild([{ id: 'r1', component: 'CPU', model: '', price: '10000', link: '', status: 'выбираю' }]);
   });
 
@@ -67,7 +67,7 @@ describe('Server Build — sbUpdateField()', () => {
 describe('Server Build — sbCycleStatus()', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = '<div id="sb-table"></div><div id="sb-total"></div><div id="sb-models-table"></div>';
+    document.body.innerHTML = '<div id="sb-table-wrap"></div><div id="sb-total"></div><div id="sb-models-list"></div>';
     saveServerBuild([{ id: 'r1', component: 'CPU', model: '', price: '', link: '', status: 'выбираю' }]);
   });
 
@@ -123,7 +123,7 @@ describe('Server Build — sbUpdateTotal()', () => {
 describe('Server Build — sbAddModel()', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = '<div id="sb-table"></div><div id="sb-total"></div><div id="sb-models-table"></div>';
+    document.body.innerHTML = '<div id="sb-table-wrap"></div><div id="sb-total"></div><div id="sb-models-list"></div>';
   });
 
   test('adds empty model row', () => {

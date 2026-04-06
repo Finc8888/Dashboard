@@ -29,7 +29,7 @@ function sbUpdateField(id, field, value) {
   if (!row) return;
   row[field] = value;
   saveServerBuild(rows);
-  if (field === 'price') sbUpdateTotal();
+  renderServerBuild();
 }
 
 function sbUpdateTotal() {
@@ -70,6 +70,7 @@ function sbUpdateModel(id, field, value) {
   if (!m) return;
   m[field] = value;
   saveServerModels(models);
+  renderServerBuild();
 }
 
 function sbStatusClass(status) {

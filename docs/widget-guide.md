@@ -248,7 +248,118 @@ registerWidget({
 - [ ] `www/index.html` — `<script>` тег в секции Widgets
 - [ ] `www/index.html` — `<link>` тег в `<head>`
 - [ ] `dashboard-data-default.json` — добавить в `prod_widgets_gladys` order/visible
+- [ ] `tests/src/widgets/<id>.test.js` — unit-тесты (load/save, CRUD, render, registration)
+- [ ] `tests/src/widgets/render-after-save.test.js` — тесты render-after-save для всех мутаций
 - [ ] `ARCHITECTURE.md` — секция 6.3 (mindmap виджетов) и 6.4 (таблица localStorage)
+
+---
+
+## Тесты для виджета
+
+Каждый новый виджет **обязательно** должен иметь Jest-тесты. Тесты находятся в `tests/src/widgets/`.
+
+### Обязательные тест-файлы
+
+1. **`tests/src/widgets/<id>.test.js`** — unit-тесты CRUD-логики виджета
+2. Добавить секцию в **`tests/src/widgets/render-after-save.test.js`** — тесты паттерна render-after-save
+
+### Что тестировать в `<id>.test.js`
+
+```js
+const { loadCore, loadWidget, applyWidgetConfigSync } = require('../helpers');
+
+beforeAll(() => {
+  global.getCurrentUser = jest.fn(() => ({ username: 'test', role: 'admin', permissions: ['dashboard', 'widget_settings'] }));
+  global.dayOff = false;
+  loadCore();
+  loadWidget('<id>.js');
+  applyWidgetConfigSync();
+});
+
+describe('<Widget> — load / save', () => {
+  test('load returns empty array/object when no data', () => { ... });
+  test('save / load roundtrip', () => { ... });
+});
+
+describe('<Widget> — add()', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.body.innerHTML = '<DOM виджета>';
+  });
+  test('adds item with correct structure', () => { ... });
+});
+
+// Аналогично для update, delete, toggle и прочих мутаций
+```
+
+**Минимальный набор тестов:**
+
+| Категория | Что проверять |
+|-----------|--------------|
+| **Load/Save** | `load` возвращает `[]` без данных; roundtrip save→load |
+| **Create** | Добавление элемента с корректной структурой |
+| **Read** | Рендер пустого состояния; рендер с данными |
+| **Update** | Изменение полей сохраняется корректно |
+| **Delete** | Удаление по ID; оставшиеся элементы на месте |
+| **Registration** | Виджет зарегистрирован с правильным `id` и `zone` |
+
+### Что тестировать в `render-after-save.test.js`
+
+Каждая функция-мутация виджета должна вызывать render после сохранения. Тест шпионит за render-функцией и проверяет вызов:
+
+```js
+const widgetDom = `<DOM виджета с нужными элементами>`;
+
+describe('<Widget> — CRUD + render', () => {
+  let spy;
+  beforeEach(() => {
+    localStorage.clear();
+    document.body.innerHTML = widgetDom;
+    spy = jest.spyOn(window, 'renderMyWidget');
+  });
+  afterEach(() => spy.mockRestore());
+
+  test('addMyItem saves and renders', () => {
+    addMyItem('test');
+    expect(loadMyWidget()).toHaveLength(1);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('deleteMyItem removes and renders', () => {
+    saveMyWidget([{ id: 'x1', text: 'test' }]);
+    spy.mockClear();
+    deleteMyItem('x1');
+    expect(loadMyWidget()).toHaveLength(0);
+    expect(spy).toHaveBeenCalled();
+  });
+});
+```
+
+**Правило:** для **каждой** функции, которая вызывает `save*()`, должен быть тест проверяющий что render-функция вызвана. Это предотвращает баг "изменения видны только после перезагрузки страницы".
+
+### DOM в тестах
+
+Render-функции обращаются к DOM-элементам. В `beforeEach` необходимо создавать минимальный DOM с **всеми** элементами, к которым обращается render:
+
+- Счётчики (`#<id>-done-count`, `#<id>-total-count`)
+- Контейнеры списков (`#<id>-list`, `#<id>-content`)
+- Индикаторы прогресса, кнопки, формы
+
+Если DOM неполный — render упадёт с `TypeError: Cannot set properties of null`.
+
+### Запуск тестов
+
+```bash
+make test              # все тесты через Docker
+make test-fast         # без пересборки контейнера
+```
+
+### Итоговый чеклист тестов
+
+- [ ] `tests/src/widgets/<id>.test.js` — unit-тесты load/save, CRUD, render, registration
+- [ ] `tests/src/widgets/render-after-save.test.js` — секция для нового виджета (все мутации → render)
+- [ ] DOM в `beforeEach` содержит все элементы, нужные render-функции
+- [ ] Все тесты проходят: `make test`
 
 ---
 

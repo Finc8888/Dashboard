@@ -23,11 +23,13 @@ const expandedBooks = {};
 
 function toggleBookExpand(id) {
   expandedBooks[id] = !expandedBooks[id];
-  }
+  renderReadingList();
+}
 
 function toggleReadingEditMode() {
   _readingEditMode = !_readingEditMode;
-  }
+  renderReadingList();
+}
 
 function addBook() {
   const titleEl = document.getElementById('reading-add-title');
@@ -45,7 +47,8 @@ function addBook() {
   titleEl.value = '';
   authorEl.value = '';
   typeEl.value = '';
-  }
+  renderReadingList();
+}
 
 function removeBook(id) {
   if (!confirm('Удалить книгу из списка?')) return;
@@ -57,7 +60,8 @@ function removeBook(id) {
   delete data[id];
   if (book && book.subItems) book.subItems.forEach(s => delete data[s.id]);
   saveReading(data);
-  }
+  renderReadingList();
+}
 
 function moveBook(id, dir) {
   const books = loadReadingBooks();
@@ -67,7 +71,8 @@ function moveBook(id, dir) {
   if (newIdx < 0 || newIdx >= books.length) return;
   [books[idx], books[newIdx]] = [books[newIdx], books[idx]];
   saveReadingBooks(books);
-  }
+  renderReadingList();
+}
 
 function startEditBook(id) {
   const books = loadReadingBooks();
@@ -97,13 +102,15 @@ function saveEditBook(id) {
   book.author = author;
   book.type = type || 'роман';
   saveReadingBooks(books);
-  }
+  renderReadingList();
+}
 
 function clearReadingList() {
   if (!confirm('Очистить весь список чтения? Все книги и прогресс будут удалены.')) return;
   saveReadingBooks([]);
   saveReading({});
-  }
+  renderReadingList();
+}
 
 function cycleBookStatus(id) {
   const books = loadReadingBooks();
@@ -133,7 +140,8 @@ function cycleBookStatus(id) {
   }
 
   saveReading(data);
-  }
+  renderReadingList();
+}
 
 function toggleSubItemStatus(bookId, subId) {
   const books = loadReadingBooks();
@@ -150,7 +158,8 @@ function toggleSubItemStatus(bookId, subId) {
     else if (anyStarted && parentState.status === 'done') data[book.id] = { ...parentState, status: 'reading', startedAt: parentState.startedAt || todayStr() };
   }
   saveReading(data);
-  }
+  renderReadingList();
+}
 
 function updateBookPage(id, value) {
   const data  = loadReading();

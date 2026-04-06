@@ -15,7 +15,8 @@ function addTask(text) {
   const tasks = loadTasks();
   tasks.push({ id: uid(), text: text.trim(), addedAt: new Date().toISOString(), addedDate: todayStr(), done: false, doneAt: null, current: false });
   saveTasks(tasks);
-    renderProdStats();
+  renderTodo();
+  renderProdStats();
 }
 
 function toggleTask(id) {
@@ -42,13 +43,15 @@ function toggleTask(id) {
     saveHistory(loadHistory().filter(h => h.id !== id));
   }
   saveTasks(tasks);
-    renderProdStats();
+  renderTodo();
+  renderProdStats();
   if (document.getElementById('history-panel').classList.contains('open')) renderHistory();
 }
 
 function deleteTask(id) {
   saveTasks(loadTasks().filter(t => t.id !== id));
-    renderProdStats();
+  renderTodo();
+  renderProdStats();
 }
 
 function setCurrentTask(id) {
@@ -65,7 +68,8 @@ function setCurrentTask(id) {
     }
   }
   saveTasks(tasks);
-  }
+  renderTodo();
+}
 
 function startRenameTask(id) {
   const itemEl = document.querySelector(`.todo-item[data-task-id="${id}"]`);
@@ -93,7 +97,8 @@ function startRenameTask(id) {
       const idx = tasks.findIndex(t => t.id === id);
       if (idx !== -1) { tasks[idx].text = newText; saveTasks(tasks); }
     }
-      }
+    renderTodo();
+  }
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); save(); }
     if (e.key === 'Escape') { saved = true; renderTodo(); }
@@ -190,7 +195,8 @@ function renderTodo() {
       const [moved] = tasks2.splice(srcIdx, 1);
       tasks2.splice(dstIdx, 0, moved);
       saveTasks(tasks2);
-          });
+      renderTodo();
+    });
 
     list.appendChild(el);
   });

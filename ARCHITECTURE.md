@@ -1,4 +1,4 @@
-# ARCHITECTURE.md — Productivity Dashboard (Unified Platform)
+# ARCHITECTURE.md — Gladys Dashboard (Unified Platform)
 
 > Единая платформа-хаб для управления локальными Docker-проектами с централизованной аутентификацией, дашбордом продуктивности и интеграцией подпроектов.
 
@@ -6,7 +6,7 @@
 
 ## 1. Обзор системы
 
-Productivity Dashboard — это оркестрирующий проект, который объединяет несколько независимых приложений под единым reverse proxy (Caddy), обеспечивает централизованную аутентификацию и предоставляет персональный дашборд продуктивности.
+Gladys Dashboard — это оркестрирующий проект, который объединяет несколько независимых приложений под единым reverse proxy (Caddy), обеспечивает централизованную аутентификацию и предоставляет персональный дашборд продуктивности.
 
 **Роль:** API Gateway + Dashboard UI + Infrastructure as Code
 **Стек:** Caddy 2 (Gateway) · Vanilla JS (Dashboard) · Docker Compose · Make

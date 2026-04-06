@@ -300,25 +300,29 @@ function submitRunResult(distId) {
   data[distId].push({ secs, date: dateStr, addedAt: new Date().toISOString() });
   data[distId].sort((a, b) => a.secs - b.secs);
   saveRunning(data);
-  }
+  renderRunning();
+}
 
 function deleteRunResult(distId, idx) {
   const data = loadRunning();
   if (!data[distId]) return;
   data[distId].splice(idx, 1);
   saveRunning(data);
-  }
+  renderRunning();
+}
 
 // edit state: { distId, idx } or null
 let runEditState = null;
 
 function startEditRun(distId, idx) {
   runEditState = { distId, idx };
-  }
+  renderRunning();
+}
 
 function cancelEditRun() {
   runEditState = null;
-  }
+  renderRunning();
+}
 
 function saveEditRun(distId, idx) {
   const timeInput = document.getElementById('run-edit-time');
@@ -334,7 +338,8 @@ function saveEditRun(distId, idx) {
   data[distId].sort((a, b) => a.secs - b.secs);
   saveRunning(data);
   runEditState = null;
-  }
+  renderRunning();
+}
 
 function buildRunEditForm(distId, idx, r) {
   return `

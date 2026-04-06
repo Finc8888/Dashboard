@@ -26,6 +26,8 @@
 │   ├── auth-architecture.md   # Архитектура единой аутентификации
 │   └── MICROSERVICES_MIGRATION.md  # Планы миграции на микросервисы
 ├── DashboardCaddyfile         # Внутренний Caddyfile для Dashboard
+├── ~/excalidraw/              # Excalidraw диаграммы архитектуры (вне репозитория)
+│   └── dashboard-ui-architecture.excalidraw.json  # Архитектура Dashboard UI
 ├── www/
 │   ├── index.html             # SPA: auth overlay + main content
 │   ├── blog-wrapper.html      # iframe-обёртка для блога (Hugo не поддерживает nav)
@@ -34,6 +36,8 @@
 │   │   ├── core.css           # Переменные, анимации, grid, header, footer, responsive
 │   │   ├── panels.css         # Модальные окна, настройки виджетов, admin
 │   │   └── widgets/           # Стили каждого виджета (по файлу)
+│   ├── img/
+│   │   └── logo.png           # Логотип Gladys (голова женщины-киборга)
 │   └── js/
 │       ├── core/
 │       │   ├── utils.js           # uid(), escHtml(), todayStr(), showToast()
@@ -155,9 +159,9 @@
 - Роли: `admin` (полный доступ + админка), `user` (только Dashboard + проекты)
 - Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username` от Caddy forward_auth
 - Все downstream-проекты хранят `auth_user_id` для привязки данных к пользователю Auth Gateway
-- Job Statistics: справочники (Companies, Skills) — admin only; вакансии — привязаны к user_id
+- Gladys Jobs: справочники (Companies, Skills) — admin only; вакансии — привязаны к user_id
 - Gladys Chat: чаты привязаны через `auth_user_id`
-- При удалении пользователя: Auth Gateway делает soft delete + удаляет сессии; в Job Statistics вакансии остаются (ON DELETE SET NULL)
+- При удалении пользователя: Auth Gateway делает soft delete + удаляет сессии; в Gladys Jobs вакансии остаются (ON DELETE SET NULL)
 
 ### При работе с чтением и reading/list.md
 - Трекер прогресса — `reading/list.md`: статус (⬜/🔄/✅), страница, журнал дат
@@ -171,6 +175,11 @@
 - Recurring-цели (например «Ранний старт с 7 утра») автоматически переносятся каждый месяц
 - Незавершённые цели автоматически переносятся в следующий период
 - Архив хранит историю целей прошлых периодов
+
+### При работе с виджетами
+- **ОБЯЗАТЕЛЬНО** ознакомься с `docs/widget-guide.md` — там описаны структура, паттерны, чеклист и требования к тестам для виджетов
+- Каждая функция-мутация виджета **должна** вызывать render после сохранения данных (паттерн render-after-save)
+- При создании нового виджета — следуй чеклисту в `docs/widget-guide.md`, включая написание тестов
 
 ### При изменении кода Dashboard (www/)
 - **ОБЯЗАТЕЛЬНО** после изменений в `www/js/app.js`, `www/index.html` или `www/css/style.css` проверь актуальность:
@@ -189,6 +198,38 @@
   - `docs/project-registration-guide.md` — обновить если изменился `PROJECTS`, `PROJECT_PERMISSIONS`, схема Caddyfile для проектов, или паттерн разрешений Auth Gateway
   - `docs/new-project-guide.md` — обновить если изменился типовой стек нового проекта (Go-структура, MobX-паттерны, схема DB, Auth Gateway интеграция, Caddy-маршруты)
 - При добавлении нового проекта в `PROJECTS` — убедиться что он задокументирован в `ARCHITECTURE.md`
+
+---
+
+## 🌐 Экосистема проектов Gladys
+
+Все проекты находятся в `~/code/projects/` и объединены под брендом **Gladys**. Gladys Dashboard — центральный хаб, остальные проекты доступны через него.
+
+### Брендинг
+- **Логотип:** `www/img/logo.png` — голова женщины-киборга (общий для всех проектов)
+- Логотип хранится **только** в основном проекте Dashboard, подпроекты ссылаются на `/img/logo.png` (абсолютный путь через Caddy gateway)
+- Логотип в подпроектах — кликабельная ссылка на `/` (возврат в Dashboard), заменяет кнопку "← Dashboard"
+- **Шрифт заголовков:** [Orbitron](https://fonts.google.com/specimen/Orbitron) (Google Fonts), gradient cyan→purple
+- **Цвета бренда:** cyan `#06b6d4`, purple `#a78bfa`, blue `#3b82f6`
+
+### Проекты и локальные пути
+
+| Проект | UI-название | Девиз | Локальный путь | Стек |
+|--------|------------|-------|----------------|------|
+| **Dashboard** | Gladys Dashboard | Всё нужное рядом | `~/code/projects/Productivity/` | Vanilla JS, Caddy |
+| **Auth Gateway** | Админ-панель | Ключи от всех дверей | `~/code/projects/Auth-Gateway/` | Go, JWT, Caddy forward_auth |
+| **Chat** | Gladys Chat | Слова под замком | `~/code/projects/Gladys-Chat/` | Go, React (MobX), WebSocket, E2EE |
+| **Jobs** | Gladys Jobs | Каждый шаг на счету | `~/code/projects/job-statistics-platform/` | Go API, React (MobX), MySQL |
+| **Blog** | Gladys Blog | Мысли обретают форму | `~/code/projects/Gladys-Blog/` | Hugo, Nginx, Docker |
+| **Blog Admin** | Gladys Blog Admin | За кулисами слов | `~/code/projects/Gladys-Blog/blog-admin/` | Vanilla JS |
+| **Sketchbook** | Gladys Sketchbook | Пространство для вдохновения | `~/code/projects/sketchbook/` | React (MobX), Go API |
+
+### Связи между проектами
+- Все проекты проксируются через **Caddy** (конфиг в Productivity)
+- Аутентификация — через **Auth Gateway** (`forward_auth`)
+- Каждый downstream-проект получает заголовки `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username`
+- При работе с конкретным проектом — переходи в его директорию
+- Логотип и шрифт Orbitron подключены во всех проектах
 
 ---
 

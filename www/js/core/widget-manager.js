@@ -244,6 +244,9 @@ function applyWidgetVisibility() {
   // Reorder widgets according to cfg.order
   reorderWidgets(cfg.order);
 
+  // Auto-span: if a grid widget is alone in its row, expand to full width
+  autoSpanLoneGridWidgets();
+
   if (emptyEl) emptyEl.style.display = (!anyVisible && canEdit) ? '' : 'none';
   showReady();
 }
@@ -282,6 +285,25 @@ function reorderWidgets(order) {
         if (el) fullWidthDiv.appendChild(el);
       }
     }
+  }
+}
+
+// ── Auto-span lone grid widgets ─────────────────────────────────────────
+function autoSpanLoneGridWidgets() {
+  const grid = document.querySelector('.grid');
+  if (!grid) return;
+  const gridIds = window.WidgetRegistry.filter(w => w.zone === 'grid').map(w => w.id);
+  const visibleGridEls = [];
+  grid.querySelectorAll('[data-widget]').forEach(el => {
+    if (gridIds.includes(el.getAttribute('data-widget')) && el.style.display !== 'none') {
+      visibleGridEls.push(el);
+    }
+  });
+  // Reset all grid widgets first
+  visibleGridEls.forEach(el => el.style.gridColumn = '');
+  // If odd count, last visible grid widget spans full width
+  if (visibleGridEls.length % 2 === 1) {
+    visibleGridEls[visibleGridEls.length - 1].style.gridColumn = '1 / -1';
   }
 }
 

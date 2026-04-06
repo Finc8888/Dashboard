@@ -1,5 +1,5 @@
 /* ── Principles ──────────────────────────────────────────────────────── */
-.principles { display: flex; flex-direction: column; gap: 10px; }
+.principles, .key-skills { display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .principle {
   display: flex;
   gap: 12px;

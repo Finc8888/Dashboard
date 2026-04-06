@@ -1,4 +1,4 @@
-# Productivity Dashboard — Unified Platform
+# Gladys Dashboard — Unified Platform
 
 Центральный дашборд продуктивности + единая точка входа для всех локальных проектов с аутентификацией.
 

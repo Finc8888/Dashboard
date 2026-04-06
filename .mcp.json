@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "krita": {
+      "type": "stdio",
+      "command": "/home/friedfox/.local/share/krita-mcp/.venv/bin/python",
+      "args": [
+        "/home/friedfox/.local/share/krita-mcp/server.py"
+      ],
+      "env": {}
+    }
+  }
+}

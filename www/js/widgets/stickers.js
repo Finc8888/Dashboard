@@ -27,19 +27,22 @@ function addSticker() {
   });
   saveStickers(stickers);
   input.value = '';
-  }
+  renderStickers();
+}
 
 function toggleSticker(id) {
   const stickers = loadStickers();
   const s = stickers.find(s => s.id === id);
   if (s) s.done = !s.done;
   saveStickers(stickers);
-  }
+  renderStickers();
+}
 
 function deleteSticker(id) {
   const stickers = loadStickers().filter(s => s.id !== id);
   saveStickers(stickers);
-  }
+  renderStickers();
+}
 
 function startEditSticker(id) {
   const stickers = loadStickers();
@@ -77,7 +80,8 @@ function changeStickerColor(id) {
   const idx = STICKER_COLORS.indexOf(s.color);
   s.color = STICKER_COLORS[(idx + 1) % STICKER_COLORS.length];
   saveStickers(stickers);
-  }
+  renderStickers();
+}
 
 function renderStickers() {
   const board = document.getElementById('sticker-board');

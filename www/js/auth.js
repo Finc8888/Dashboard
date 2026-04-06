@@ -66,7 +66,7 @@ function renderAuthForm() {
   const overlay = document.getElementById('auth-overlay');
   overlay.innerHTML = `
     <div class="auth-card">
-      <div class="auth-title">Productivity Dashboard</div>
+      <div class="auth-title gladys-title">Gladys Dashboard</div>
       <div class="auth-subtitle">Войдите или зарегистрируйтесь</div>
       <div class="auth-tabs">
         <button class="auth-tab active" id="auth-tab-login" onclick="switchAuthTab('login')">Вход</button>

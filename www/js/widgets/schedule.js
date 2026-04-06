@@ -65,7 +65,8 @@ function saveSlotLabel(index) {
   const labels = loadScheduleLabels() || {};
   labels[index] = { label: labelVal, sub: subVal };
   saveScheduleLabels(labels);
-  }
+  renderTimeline();
+}
 
 let lastActiveIndex = -1;
 

@@ -41,7 +41,8 @@
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
-  max-height: 280px;
+  flex: 1;
+  min-height: 0;
   padding-right: 2px;
 }
 .todo-list::-webkit-scrollbar       { width: 4px; }

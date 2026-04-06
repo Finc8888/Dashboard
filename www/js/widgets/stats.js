@@ -68,7 +68,8 @@ function checkEarlyLogin() {
   if (h >= 7 && h < 8) {
     data[mk][today] = { time: now.toISOString(), success: true };
     saveEarlyData(data);
-        checkEarlyGoalCompletion();
+    renderEarlyStat();
+    checkEarlyGoalCompletion();
   }
 }
 
@@ -163,6 +164,7 @@ function logDistraction(category) {
   if (!data[today]) data[today] = [];
   data[today].push({ category, time: new Date().toISOString() });
   saveDistractions(data);
+  renderDistractionWidget();
   toggleDistractionPanel();
 }
 

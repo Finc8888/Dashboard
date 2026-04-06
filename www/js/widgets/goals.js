@@ -122,11 +122,13 @@ function saveGoalEdit(storageKey, periodKey, goalId, newText) {
 
 function startGoalEdit(id) {
   goalEditId = id;
-  }
+  renderAllGoals();
+}
 
 function cancelGoalEdit() {
   goalEditId = null;
-  }
+  renderAllGoals();
+}
 
 function formatMonthTitle(key) {
   const [y, m] = key.split('-');

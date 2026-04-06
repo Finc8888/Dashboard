@@ -10,6 +10,13 @@ beforeAll(() => {
   loadWidget('todo.js');
 });
 
+const todoDomHtml = `
+  <span id="todo-done-count">0</span>
+  <span id="todo-total-count">0</span>
+  <div id="todo-list"></div>
+  <div id="history-panel"><div id="history-list"></div></div>
+`;
+
 describe('TODO — load / save', () => {
   test('loadTasks returns empty array when no data', () => {
     expect(loadTasks()).toEqual([]);
@@ -33,6 +40,8 @@ describe('TODO — load / save', () => {
 });
 
 describe('TODO — addTask()', () => {
+  beforeEach(() => { document.body.innerHTML = todoDomHtml; });
+
   test('adds task with correct structure', () => {
     addTask('Buy milk');
     const tasks = loadTasks();
@@ -62,8 +71,7 @@ describe('TODO — addTask()', () => {
 describe('TODO — toggleTask()', () => {
   beforeEach(() => {
     localStorage.clear();
-    // Set up minimal DOM for toggleTask (it references history-panel)
-    document.body.innerHTML = '<div id="history-panel"></div>';
+    document.body.innerHTML = todoDomHtml;
   });
 
   test('marks task as done and moves to history', () => {
@@ -90,6 +98,8 @@ describe('TODO — toggleTask()', () => {
 });
 
 describe('TODO — deleteTask()', () => {
+  beforeEach(() => { document.body.innerHTML = todoDomHtml; });
+
   test('removes task by id', () => {
     addTask('To delete');
     addTask('To keep');
@@ -103,6 +113,8 @@ describe('TODO — deleteTask()', () => {
 });
 
 describe('TODO — setCurrentTask()', () => {
+  beforeEach(() => { document.body.innerHTML = todoDomHtml; });
+
   test('sets current flag and moves task to top', () => {
     addTask('First');
     addTask('Second');
@@ -155,11 +167,7 @@ describe('TODO — clearHistory()', () => {
 
 describe('TODO — renderTodo()', () => {
   beforeEach(() => {
-    document.body.innerHTML = `
-      <div id="todo-done-count"></div>
-      <div id="todo-total-count"></div>
-      <div id="todo-list"></div>
-    `;
+    document.body.innerHTML = todoDomHtml;
     localStorage.clear();
   });
 

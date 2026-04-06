@@ -45,14 +45,20 @@ describe('Reading — getBookState()', () => {
   });
 });
 
+const readingDom = `
+  <span id="reading-done-count">0</span>
+  <span id="reading-total-count">0</span>
+  <div id="reading-progress-fill"></div>
+  <div id="reading-books"></div>
+  <input id="reading-add-title" value="Новая книга" />
+  <input id="reading-add-author" value="Автор" />
+  <input id="reading-add-type" value="сборник" />
+`;
+
 describe('Reading — addBook()', () => {
   beforeEach(() => {
     localStorage.clear();
-    document.body.innerHTML = `
-      <input id="reading-add-title" value="Новая книга" />
-      <input id="reading-add-author" value="Автор" />
-      <input id="reading-add-type" value="сборник" />
-    `;
+    document.body.innerHTML = readingDom;
   });
 
   test('adds book with correct structure', () => {
@@ -87,6 +93,7 @@ describe('Reading — addBook()', () => {
 describe('Reading — removeBook()', () => {
   beforeEach(() => {
     localStorage.clear();
+    document.body.innerHTML = readingDom;
     global.confirm = jest.fn(() => true);
     saveReadingBooks([
       { id: 'b1', title: 'Keep', author: 'A', type: 'роман' },
@@ -110,6 +117,10 @@ describe('Reading — removeBook()', () => {
 });
 
 describe('Reading — toggleBookExpand()', () => {
+  beforeEach(() => {
+    document.body.innerHTML = readingDom;
+  });
+
   test('toggles expand state', () => {
     toggleBookExpand('b1');
     expect(expandedBooks.b1).toBe(true);

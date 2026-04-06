@@ -58,6 +58,7 @@
   gap: 10px;
   padding: 4px 0;
   flex: 1;
+  min-height: 0;
   align-content: flex-start;
   overflow-y: auto;
 }

@@ -79,7 +79,9 @@ header {
   gap: 8px 16px;
 }
 header h1    { font-size: 18px; font-weight: 600; letter-spacing: .5px; }
-header .meta { color: var(--muted); font-size: 13px; }
+.gladys-title { font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 2px; background: linear-gradient(135deg, #06b6d4, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+header .meta { color: var(--muted); font-size: 13px; font-style: italic; }
+.header-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
 
 .header-actions {
   display: flex;
@@ -158,6 +160,8 @@ header .meta { color: var(--muted); font-size: 13px; }
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 .card-title {
   font-size: 13px;

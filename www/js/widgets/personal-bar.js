@@ -47,7 +47,8 @@ function resetDaysCounter() {
   data.failCount = (data.failCount || 0) + 1;
   data.startDate = new Date().toISOString().slice(0, 10);
   saveDaysData(data);
-  }
+  renderDaysCounter();
+}
 
 function editDaysDate() {
   const data = loadDaysData() || { startDate: new Date().toISOString().slice(0, 10), failCount: 0 };
@@ -58,7 +59,8 @@ function editDaysDate() {
   if (isNaN(d.getTime())) { alert('Некорректная дата'); return; }
   data.startDate = newDate;
   saveDaysData(data);
-  }
+  renderDaysCounter();
+}
 
 
 // ── Financial cushions ────────────────────────────────────────────────────
@@ -76,7 +78,8 @@ function renderCushions() {
 function changeCushions(delta) {
   const val = Math.max(0, getCushions() + delta);
   localStorage.setItem(CUSHION_KEY, val);
-  }
+  renderCushions();
+}
 
 // ── Mortgage ───────────────────────────────────────────────────────────────
 const MORTGAGE_KEY = 'prod_mortgage_v1';
@@ -161,7 +164,8 @@ function saveMortgage() {
   };
   saveMortgageData(d);
   closeMortgageEdit();
-  }
+  renderMortgage();
+}
 
 
 function renderPersonalBar() {
