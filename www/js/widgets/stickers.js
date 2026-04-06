@@ -3,9 +3,7 @@
 // ── Sticker Board (Доска напоминаний) ─────────────────────────────────
 const STICKERS_KEY = 'prod_stickers_v1';
 
-function loadStickers() {
-  try { return JSON.parse(localStorage.getItem(STICKERS_KEY) || '[]'); } catch { return []; }
-}
+function loadStickers() { return loadJSON(STICKERS_KEY, []); }
 function saveStickers(list) {
   localStorage.setItem(STICKERS_KEY, JSON.stringify(list));
 }
@@ -19,7 +17,7 @@ function addSticker() {
   if (!text) return;
   const stickers = loadStickers();
   stickers.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uid(),
     text,
     done: false,
     color: STICKER_COLORS[stickers.length % STICKER_COLORS.length],

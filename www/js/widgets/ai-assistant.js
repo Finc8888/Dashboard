@@ -6,9 +6,7 @@ const AI_OLLAMA_URL = localStorage.getItem('prod_ai_ollama_url') || 'http://loca
 const AI_MODEL = localStorage.getItem('prod_ai_model') || 'qwen3.5:4b';
 const AI_CONTEXT_KEY = 'prod_ai_context_v1';
 
-function aiLoadHistory() {
-  try { return JSON.parse(localStorage.getItem(AI_HISTORY_KEY)) || []; } catch { return []; }
-}
+function aiLoadHistory() { return loadJSON(AI_HISTORY_KEY, []); }
 function aiSaveHistory(msgs) {
   localStorage.setItem(AI_HISTORY_KEY, JSON.stringify(msgs));
 }

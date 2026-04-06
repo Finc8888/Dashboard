@@ -5,9 +5,9 @@ const SB_KEY = 'prod_server_build_v1';
 const SB_STATUSES = ['выбираю', 'выбрано', 'в корзине', 'заказано', 'куплено'];
 const SB_MODELS_KEY = 'prod_server_models_v1';
 
-function loadServerBuild() { try { return JSON.parse(localStorage.getItem(SB_KEY) || '[]'); } catch { return []; } }
+function loadServerBuild() { return loadJSON(SB_KEY, []); }
 function saveServerBuild(d) { localStorage.setItem(SB_KEY, JSON.stringify(d)); }
-function loadServerModels() { try { return JSON.parse(localStorage.getItem(SB_MODELS_KEY) || '[]'); } catch { return []; } }
+function loadServerModels() { return loadJSON(SB_MODELS_KEY, []); }
 function saveServerModels(d) { localStorage.setItem(SB_MODELS_KEY, JSON.stringify(d)); }
 
 function sbAddRow() {

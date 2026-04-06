@@ -3,9 +3,7 @@
 // ── Days counter ──────────────────────────────────────────────────────────
 const DAYS_KEY = 'prod_days_v1';
 
-function loadDaysData() {
-  try { return JSON.parse(localStorage.getItem(DAYS_KEY)); } catch { return null; }
-}
+function loadDaysData() { return loadJSON(DAYS_KEY, null); }
 function saveDaysData(d) { localStorage.setItem(DAYS_KEY, JSON.stringify(d)); }
 
 function renderDaysCounter() {
@@ -84,9 +82,7 @@ function changeCushions(delta) {
 // ── Mortgage ───────────────────────────────────────────────────────────────
 const MORTGAGE_KEY = 'prod_mortgage_v1';
 
-function loadMortgage() {
-  try { return JSON.parse(localStorage.getItem(MORTGAGE_KEY) || '{}'); } catch { return {}; }
-}
+function loadMortgage() { return loadJSON(MORTGAGE_KEY, {}); }
 function saveMortgageData(d) { localStorage.setItem(MORTGAGE_KEY, JSON.stringify(d)); }
 
 function fmtRub(n) {

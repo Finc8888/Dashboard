@@ -3,13 +3,7 @@
 // ── Key Skills ──────────────────────────────────────────────────────────────
 const KEY_SKILLS_KEY = 'prod_key_skills_v1';
 
-function loadKeySkills() {
-  try {
-    const raw = localStorage.getItem(KEY_SKILLS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch { return []; }
-}
+function loadKeySkills() { return loadJSON(KEY_SKILLS_KEY, []); }
 
 function saveKeySkills(list) {
   localStorage.setItem(KEY_SKILLS_KEY, JSON.stringify(list));

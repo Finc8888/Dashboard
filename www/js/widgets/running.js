@@ -1,20 +1,12 @@
 'use strict';
 
 // ── Training Plan Target ─────────────────────────────────────────────────
-function getTodayDateStr() {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 function getTrainingForDate(dateStr) {
   return TRAINING_SCHEDULE.find(t => t.date === dateStr) || null;
 }
 
 function getNextTraining() {
-  const today = getTodayDateStr();
+  const today = todayStr();
   return TRAINING_SCHEDULE.find(t => t.date > today) || null;
 }
 
@@ -47,7 +39,7 @@ function renderTrainingToday() {
     return;
   }
 
-  const todayStr = getTodayDateStr();
+  const todayStr = todayStr();
   let entry = getTrainingForDate(todayStr);
   let isUpcoming = false;
   if (!entry) {
@@ -253,9 +245,7 @@ const RUN_DISTANCES = [
   { id: 'marathon', label: 'МАРАФОН',     km: 42.195  },
 ];
 
-function loadRunning() {
-  try { return JSON.parse(localStorage.getItem(RUNNING_KEY) || '{}'); } catch { return {}; }
-}
+function loadRunning() { return loadJSON(RUNNING_KEY, {}); }
 function saveRunning(data) { localStorage.setItem(RUNNING_KEY, JSON.stringify(data)); }
 
 function parseRunTime(str) {

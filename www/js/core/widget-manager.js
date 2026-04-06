@@ -293,17 +293,26 @@ function autoSpanLoneGridWidgets() {
   const grid = document.querySelector('.grid');
   if (!grid) return;
   const gridIds = window.WidgetRegistry.filter(w => w.zone === 'grid').map(w => w.id);
-  const visibleGridEls = [];
+  const flowEls = [];
+  let spanSlots = 0;
   grid.querySelectorAll('[data-widget]').forEach(el => {
-    if (gridIds.includes(el.getAttribute('data-widget')) && el.style.display !== 'none') {
-      visibleGridEls.push(el);
+    const id = el.getAttribute('data-widget');
+    if (!gridIds.includes(id) || el.style.display === 'none') return;
+    // Check for data-grid-span attribute (set on widgets that span multiple rows)
+    const span = parseInt(el.dataset.gridSpan, 10);
+    if (span > 1) {
+      spanSlots += span;
+    } else {
+      flowEls.push(el);
     }
   });
-  // Reset all grid widgets first
-  visibleGridEls.forEach(el => el.style.gridColumn = '');
-  // If odd count, last visible grid widget spans full width
-  if (visibleGridEls.length % 2 === 1) {
-    visibleGridEls[visibleGridEls.length - 1].style.gridColumn = '1 / -1';
+  // Reset all flow widgets
+  flowEls.forEach(el => el.style.gridColumn = '');
+  // Flow widgets paired alongside spanning widgets don't need expansion.
+  // Remaining flow widgets after spanning rows: expand last if odd.
+  const unpaired = Math.max(0, flowEls.length - spanSlots);
+  if (unpaired > 0 && unpaired % 2 === 1) {
+    flowEls[flowEls.length - 1].style.gridColumn = '1 / -1';
   }
 }
 

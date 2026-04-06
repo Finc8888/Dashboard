@@ -4,14 +4,10 @@
 const READING_KEY = 'prod_reading_v1';
 const READING_BOOKS_KEY = 'prod_reading_books_v1';
 
-function loadReadingBooks() {
-  try { return JSON.parse(localStorage.getItem(READING_BOOKS_KEY) || '[]'); } catch { return []; }
-}
+function loadReadingBooks() { return loadJSON(READING_BOOKS_KEY, []); }
 function saveReadingBooks(books) { localStorage.setItem(READING_BOOKS_KEY, JSON.stringify(books)); }
 
-function loadReading() {
-  try { return JSON.parse(localStorage.getItem(READING_KEY) || '{}'); } catch { return {}; }
-}
+function loadReading() { return loadJSON(READING_KEY, {}); }
 function saveReading(data) { localStorage.setItem(READING_KEY, JSON.stringify(data)); }
 
 function getBookState(data, id) {

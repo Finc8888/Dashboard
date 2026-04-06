@@ -2,9 +2,9 @@
 
 // ── Weekend Plan (План выходного дня) ─────────────────────────────────
 const WP_TASKS_KEY = 'prod_weekend_tasks_v1';
-let wpDragSrcId = null;
+const _wpDragRef = { value: null };
 
-function loadWpTasks()  { try { return JSON.parse(localStorage.getItem(WP_TASKS_KEY) || '[]'); } catch { return []; } }
+function loadWpTasks()  { return loadJSON(WP_TASKS_KEY, []); }
 function saveWpTasks(t) { localStorage.setItem(WP_TASKS_KEY, JSON.stringify(t)); }
 
 function addWpTask(text) {
@@ -29,38 +29,18 @@ function deleteWpTask(id) {
 }
 
 function startRenameWpTask(id) {
-  const itemEl = document.querySelector(`.wp-item[data-wp-id="${id}"]`);
-  if (!itemEl) return;
-  const textEl = itemEl.querySelector('.wp-text');
-  if (!textEl) return;
+  const textEl = document.querySelector(`.wp-item[data-wp-id="${id}"] .wp-text`);
   const task = loadWpTasks().find(t => t.id === id);
-  if (!task) return;
-
-  const input = document.createElement('input');
-  input.className = 'todo-rename-input';
-  input.maxLength = 480;
-  input.value = task.text;
-  textEl.replaceWith(input);
-  input.focus();
-  input.select();
-
-  let saved = false;
-  function save() {
-    if (saved) return;
-    saved = true;
-    const newText = input.value.trim();
-    if (newText && newText !== task.text) {
+  if (!textEl || !task) return;
+  attachRenameInput(textEl, task.text, {
+    onSave(newText) {
       const tasks = loadWpTasks();
       const idx = tasks.findIndex(t => t.id === id);
       if (idx !== -1) { tasks[idx].text = newText; saveWpTasks(tasks); }
-    }
-    renderWeekendPlan();
-  }
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); save(); }
-    if (e.key === 'Escape') { saved = true; renderWeekendPlan(); }
+      renderWeekendPlan();
+    },
+    onRender() { renderWeekendPlan(); },
   });
-  input.addEventListener('blur', save);
 }
 
 function renderWeekendPlan() {
@@ -84,7 +64,6 @@ function renderWeekendPlan() {
   tasks.forEach(task => {
     const el = document.createElement('div');
     el.className = 'wp-item' + (task.done ? ' done' : '');
-    el.setAttribute('draggable', 'true');
     el.dataset.wpId = task.id;
 
     el.innerHTML = `
@@ -100,39 +79,12 @@ function renderWeekendPlan() {
         <button class="todo-del" onclick="deleteWpTask('${task.id}')" title="Удалить">×</button>
       </div>`;
 
-    el.addEventListener('dragstart', e => {
-      wpDragSrcId = task.id;
-      e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => el.classList.add('dragging'), 0);
-    });
-    el.addEventListener('dragend', () => {
-      el.classList.remove('dragging');
-      document.querySelectorAll('.wp-item.drag-over').forEach(i => i.classList.remove('drag-over'));
-    });
-    el.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (wpDragSrcId !== task.id) {
-        document.querySelectorAll('.wp-item.drag-over').forEach(i => i.classList.remove('drag-over'));
-        el.classList.add('drag-over');
-      }
-    });
-    el.addEventListener('dragleave', e => {
-      if (e.target === el || el.contains(e.relatedTarget) === false) el.classList.remove('drag-over');
-    });
-    el.addEventListener('drop', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      el.classList.remove('drag-over');
-      if (wpDragSrcId === task.id) return;
-      const tasks2 = loadWpTasks();
-      const srcIdx = tasks2.findIndex(t => t.id === wpDragSrcId);
-      const dstIdx = tasks2.findIndex(t => t.id === task.id);
-      if (srcIdx === -1 || dstIdx === -1) return;
-      const [moved] = tasks2.splice(srcIdx, 1);
-      tasks2.splice(dstIdx, 0, moved);
-      saveWpTasks(tasks2);
-      renderWeekendPlan();
+    attachDragReorder(el, task.id, {
+      srcRef: _wpDragRef,
+      itemSelector: '.wp-item',
+      loadFn: loadWpTasks,
+      saveFn: saveWpTasks,
+      renderFn: renderWeekendPlan,
     });
 
     list.appendChild(el);

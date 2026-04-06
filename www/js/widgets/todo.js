@@ -1,14 +1,14 @@
 'use strict';
 
 // ── TODO List ─────────────────────────────────────────────────────────────
-let dragSrcId = null;
+const _todoDragRef = { value: null };
 
 const TASKS_KEY   = 'prod_tasks_v1';
 const HISTORY_KEY = 'prod_history_v1';
 
-function loadTasks()    { try { return JSON.parse(localStorage.getItem(TASKS_KEY)   || '[]'); } catch { return []; } }
+function loadTasks()    { return loadJSON(TASKS_KEY,   []); }
 function saveTasks(t)   { localStorage.setItem(TASKS_KEY,   JSON.stringify(t)); }
-function loadHistory()  { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
+function loadHistory()  { return loadJSON(HISTORY_KEY, []); }
 function saveHistory(h) { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); }
 
 function addTask(text) {
@@ -72,38 +72,18 @@ function setCurrentTask(id) {
 }
 
 function startRenameTask(id) {
-  const itemEl = document.querySelector(`.todo-item[data-task-id="${id}"]`);
-  if (!itemEl) return;
-  const textEl = itemEl.querySelector('.todo-text');
-  if (!textEl) return;
+  const textEl = document.querySelector(`.todo-item[data-task-id="${id}"] .todo-text`);
   const task = loadTasks().find(t => t.id === id);
-  if (!task) return;
-
-  const input = document.createElement('input');
-  input.className = 'todo-rename-input';
-  input.maxLength = 480;
-  input.value = task.text;
-  textEl.replaceWith(input);
-  input.focus();
-  input.select();
-
-  let saved = false;
-  function save() {
-    if (saved) return;
-    saved = true;
-    const newText = input.value.trim();
-    if (newText && newText !== task.text) {
+  if (!textEl || !task) return;
+  attachRenameInput(textEl, task.text, {
+    onSave(newText) {
       const tasks = loadTasks();
       const idx = tasks.findIndex(t => t.id === id);
       if (idx !== -1) { tasks[idx].text = newText; saveTasks(tasks); }
-    }
-    renderTodo();
-  }
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); save(); }
-    if (e.key === 'Escape') { saved = true; renderTodo(); }
+      renderTodo();
+    },
+    onRender() { renderTodo(); },
   });
-  input.addEventListener('blur', save);
 }
 
 function renderTodo() {
@@ -130,7 +110,6 @@ function renderTodo() {
     el.className = 'todo-item'
       + (task.done    ? ' done'    : '')
       + (task.current ? ' current' : '');
-    el.setAttribute('draggable', 'true');
     el.dataset.taskId = task.id;
 
     el.innerHTML = `
@@ -161,41 +140,12 @@ function renderTodo() {
     });
 
     // Drag events
-    el.addEventListener('dragstart', e => {
-      dragSrcId = task.id;
-      e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => el.classList.add('dragging'), 0);
-    });
-    el.addEventListener('dragend', () => {
-      el.classList.remove('dragging');
-      document.querySelectorAll('.todo-item.drag-over').forEach(i => i.classList.remove('drag-over'));
-    });
-    el.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (dragSrcId !== task.id) {
-        document.querySelectorAll('.todo-item.drag-over').forEach(i => i.classList.remove('drag-over'));
-        el.classList.add('drag-over');
-      }
-    });
-    el.addEventListener('dragleave', e => {
-      if (e.target === el || el.contains(e.relatedTarget) === false) {
-        el.classList.remove('drag-over');
-      }
-    });
-    el.addEventListener('drop', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      el.classList.remove('drag-over');
-      if (dragSrcId === task.id) return;
-      const tasks2 = loadTasks();
-      const srcIdx = tasks2.findIndex(t => t.id === dragSrcId);
-      const dstIdx = tasks2.findIndex(t => t.id === task.id);
-      if (srcIdx === -1 || dstIdx === -1) return;
-      const [moved] = tasks2.splice(srcIdx, 1);
-      tasks2.splice(dstIdx, 0, moved);
-      saveTasks(tasks2);
-      renderTodo();
+    attachDragReorder(el, task.id, {
+      srcRef: _todoDragRef,
+      itemSelector: '.todo-item',
+      loadFn: loadTasks,
+      saveFn: saveTasks,
+      renderFn: renderTodo,
     });
 
     list.appendChild(el);

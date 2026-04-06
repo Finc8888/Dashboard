@@ -3,13 +3,7 @@
 // ── Principles ───────────────────────────────────────────────────────────
 const PRINCIPLES_KEY = 'prod_principles_v1';
 
-function loadPrinciples() {
-  try {
-    const raw = localStorage.getItem(PRINCIPLES_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
-}
+function loadPrinciples() { return loadJSON(PRINCIPLES_KEY, null); }
 
 function savePrinciples(list) {
   localStorage.setItem(PRINCIPLES_KEY, JSON.stringify(list));
@@ -65,14 +59,14 @@ function editPrinciple(id) {
 }
 
 function savePrincipleForm() {
-  var icon  = document.getElementById('principle-icon-input').value.trim() || '🎯';
-  var title = document.getElementById('principle-title-input').value.trim();
-  var desc  = document.getElementById('principle-desc-input').value.trim();
-  var color = document.getElementById('principle-color-input').value;
+  const icon  = document.getElementById('principle-icon-input').value.trim() || '🎯';
+  const title = document.getElementById('principle-title-input').value.trim();
+  const desc  = document.getElementById('principle-desc-input').value.trim();
+  const color = document.getElementById('principle-color-input').value;
   if (!title) return;
-  var principles = getPrinciples();
+  const principles = getPrinciples();
   if (_editingPrincipleId) {
-    var idx = principles.findIndex(x => x.id === _editingPrincipleId);
+    const idx = principles.findIndex(x => x.id === _editingPrincipleId);
     if (idx !== -1) {
       principles[idx] = { id: _editingPrincipleId, icon: icon, title: title, desc: desc, color: color };
     }
@@ -92,7 +86,7 @@ function cancelPrincipleForm() {
 
 function deletePrinciple(id) {
   if (!confirm('Удалить этот принцип?')) return;
-  var principles = getPrinciples();
+  const principles = getPrinciples();
   savePrinciples(principles.filter(x => x.id !== id));
   renderPrinciples();
 }

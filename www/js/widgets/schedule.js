@@ -23,9 +23,7 @@ const slots = [
 ];
 const READING_SLOT_INDEX = 14;
 
-function loadScheduleLabels() {
-  try { return JSON.parse(localStorage.getItem(SCHEDULE_LABELS_KEY) || 'null'); } catch { return null; }
-}
+function loadScheduleLabels() { return loadJSON(SCHEDULE_LABELS_KEY, null); }
 function saveScheduleLabels(labels) { localStorage.setItem(SCHEDULE_LABELS_KEY, JSON.stringify(labels)); }
 
 function getSlotLabel(index) {
@@ -151,8 +149,8 @@ function renderTimeline() {
       <div class="slot-time">${slot.time}</div>
       <div class="slot-dot ${slot.dot}"></div>
       <div class="slot-content" id="slot-label-${i}">
-        <div class="slot-label">${label} <button class="slot-rename-btn" onclick="event.stopPropagation(); startEditSlotLabel(${i})" title="Переименовать">✎</button></div>
-        ${sub ? `<div class="slot-sub">${sub}</div>` : ''}
+        <div class="slot-label">${escHtml(label)} <button class="slot-rename-btn" onclick="event.stopPropagation(); startEditSlotLabel(${i})" title="Переименовать">✎</button></div>
+        ${sub ? `<div class="slot-sub">${escHtml(sub)}</div>` : ''}
       </div>`;
     tl.appendChild(el);
 

@@ -9,9 +9,7 @@ const GO_START_KEY = 'prod_go_start_date';
 let currentGoTab = 'lessons';
 let expandedLesson = null;
 
-function loadGoProgress(key) {
-  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
-}
+function loadGoProgress(key) { return loadJSON(key, {}); }
 function saveGoProgress(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 
 function getGoStartDate() {

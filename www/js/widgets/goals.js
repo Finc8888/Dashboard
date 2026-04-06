@@ -17,9 +17,7 @@ function currentYearKey() {
   return String(new Date().getFullYear());
 }
 
-function loadGoalsStore(storageKey) {
-  try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; }
-}
+function loadGoalsStore(storageKey) { return loadJSON(storageKey, {}); }
 function saveGoalsStore(storageKey, data) {
   localStorage.setItem(storageKey, JSON.stringify(data));
 }

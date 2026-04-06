@@ -3,9 +3,7 @@
 // ── Scratchpad ───────────────────────────────────────────────────────────
 const SCRATCHPAD_KEY = 'prod_scratchpad_v1';
 
-function loadScratchpad() {
-  try { return JSON.parse(localStorage.getItem(SCRATCHPAD_KEY) || '{}'); } catch { return {}; }
-}
+function loadScratchpad() { return loadJSON(SCRATCHPAD_KEY, {}); }
 function saveScratchpad(data) { localStorage.setItem(SCRATCHPAD_KEY, JSON.stringify(data)); }
 
 function initScratchpad() {

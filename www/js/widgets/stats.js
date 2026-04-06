@@ -41,9 +41,7 @@ function initStatCounters() {
 // ── Early Start Tracker (7:00–8:00) ─────────────────────────────────────
 const EARLY_KEY = 'prod_early_start_v1';
 
-function loadEarlyData() {
-  try { return JSON.parse(localStorage.getItem(EARLY_KEY) || '{}'); } catch { return {}; }
-}
+function loadEarlyData() { return loadJSON(EARLY_KEY, {}); }
 function saveEarlyData(d) { localStorage.setItem(EARLY_KEY, JSON.stringify(d)); }
 
 function getEarlyMonthKey() { return currentMonthKey(); }
@@ -153,9 +151,7 @@ const DISTRACTION_CATS = [
   { id: 'other',     icon: '❓', label: 'Другое' },
 ];
 
-function loadDistractions() {
-  try { return JSON.parse(localStorage.getItem(DISTRACTION_KEY) || '{}'); } catch { return {}; }
-}
+function loadDistractions() { return loadJSON(DISTRACTION_KEY, {}); }
 function saveDistractions(d) { localStorage.setItem(DISTRACTION_KEY, JSON.stringify(d)); }
 
 function logDistraction(category) {

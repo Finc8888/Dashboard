@@ -5,9 +5,7 @@ const PROD_DAILY_KEY = 'prod_daily_snapshot_v1';
 const MAX_TASK_IN_DAY = 10;
 let currentProdPeriod = 'week';
 
-function loadDailySnapshots() {
-  try { return JSON.parse(localStorage.getItem(PROD_DAILY_KEY) || '{}'); } catch { return {}; }
-}
+function loadDailySnapshots() { return loadJSON(PROD_DAILY_KEY, {}); }
 function saveDailySnapshots(d) { localStorage.setItem(PROD_DAILY_KEY, JSON.stringify(d)); }
 
 function snapshotToday() {
