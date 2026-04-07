@@ -180,6 +180,24 @@ header .meta { color: var(--muted); font-size: 13px; font-style: italic; }
 .card-title-row .card-title { margin-bottom: 0; }
 
 
+/* ── Widget Container ────────────────────────────────────────────────── */
+/* Внешняя граница для виджетов из нескольких карточек (personal-bar, stats, running, wod).
+   Каждый такой виджет добавляет класс widget-container к своему корневому элементу.
+   Уникальные свойства (padding, overflow, margin, display) остаются в CSS виджета. */
+.widget-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* Заголовок внутри grid-контейнера — растягивается на все колонки */
+.widget-container-header {
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
+}
+.widget-container-header .card-title { margin-bottom: 0; }
+
+
 /* ── Full-width section ──────────────────────────────────────────────── */
 .full-width { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
@@ -223,7 +241,7 @@ footer {
   .grid            { grid-template-columns: 1fr; }
   .schedule        { grid-row: auto; }
   .stats           { grid-template-columns: repeat(2, 1fr); }
-  .personal-bar    { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
+  .personal-bar    { grid-template-columns: 1fr 1fr; }
   .prod-metric-main { border-right: none; padding-right: 0; margin-right: 0; }
   header           { padding: 14px 16px; }
   .grid            { padding: 16px; }
@@ -233,8 +251,9 @@ footer {
 }
 
 @media (max-width: 500px) {
-  .personal-bar    { grid-template-columns: 1fr; }
-  .stats           { grid-template-columns: 1fr; }
+  .widget-container { border-radius: 10px; }
+  .personal-bar    { grid-template-columns: 1fr; padding: 12px; }
+  .stats           { grid-template-columns: 1fr; padding: 12px; }
   .grid            { padding: 10px; gap: 12px; }
   .card            { padding: 14px; border-radius: 10px; }
   footer           { padding: 20px 12px 28px; }

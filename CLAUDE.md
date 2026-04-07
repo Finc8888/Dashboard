@@ -2,6 +2,16 @@
 
 Этот файл описывает структуру репозитория, контекст владельца и инструкции для Claude при работе с содержимым.
 
+## Communication with Me
+
+Challenge my decisions. If my approach is suboptimal, say so directly with technical rationale. Do not agree just because I said so.
+
+Before showing any result (code, documentation, analysis), score it 1-10. If below 8 — improve it yourself first, then show the final version. Do not show intermediate drafts or mention the score unless asked.
+
+After completing each task, suggest 2-3 concrete next improvements. Prioritize by pattern: if the same action sequence has appeared more than once — propose a skill, subagent, or script to automate it. Otherwise suggest the highest-leverage improvement: code quality, best practices, tooling, or documentation. Keep suggestions brief (one line each), do not implement unless asked.
+
+> Template: `~/code/projects/claude_projects/CLAUDE.template.md` | New project: `/custom-init-claude` | Sync rules: `/custom-sync-claude-rules`
+
 ---
 
 ## 👤 Контекст владельца

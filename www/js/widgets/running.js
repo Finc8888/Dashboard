@@ -39,8 +39,8 @@ function renderTrainingToday() {
     return;
   }
 
-  const todayStr = todayStr();
-  let entry = getTrainingForDate(todayStr);
+  const today = todayStr();
+  let entry = getTrainingForDate(today);
   let isUpcoming = false;
   if (!entry) {
     entry = getNextTraining();

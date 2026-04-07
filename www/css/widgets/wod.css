@@ -1,14 +1,12 @@
 /* ── Word of the Day ─────────────────────────────────────────────────── */
 .wod-section {
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(90deg, rgba(59,130,246,.04) 0%, rgba(167,139,250,.04) 100%);
   overflow: hidden;
+  width: calc(100% - 64px);
+  max-width: 1236px;
+  margin: 0 auto;
 }
 .wod-inner {
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 18px 32px;
+  padding: 18px 20px;
 }
 
 /* Header row */
@@ -245,11 +243,13 @@
 }
 
 @media (max-width: 900px) {
+  .wod-section { width: calc(100% - 32px); }
   .wod-body   { grid-template-columns: 1fr; }
   .wod-right  { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 14px; }
   .wod-inner  { padding: 16px; }
 }
 @media (max-width: 480px) {
+  .wod-section { width: calc(100% - 20px); }
   .wod-inner { padding: 12px; }
   .wod-word { font-size: 22px; }
   .wod-word-ru { font-size: 18px; }

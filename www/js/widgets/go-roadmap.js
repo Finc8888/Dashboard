@@ -40,7 +40,8 @@ function toggleGoLesson(lessonId) {
     progress[lessonId] = { done: true, doneAt: new Date().toISOString() };
   }
   saveGoProgress(GO_LESSONS_KEY, progress);
-  }
+  renderGoTab();
+}
 
 function toggleGoItem(key, itemId) {
   const progress = loadGoProgress(key);
@@ -50,18 +51,21 @@ function toggleGoItem(key, itemId) {
     progress[itemId] = { done: true, doneAt: new Date().toISOString() };
   }
   saveGoProgress(key, progress);
-  }
+  renderGoTab();
+}
 
 function expandGoLesson(id) {
   expandedLesson = expandedLesson === id ? null : id;
-  }
+  renderGoTab();
+}
 
 function setGoTab(tab) {
   currentGoTab = tab;
   document.querySelectorAll('.go-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === tab);
   });
-  }
+  renderGoTab();
+}
 
 function renderGoTab() {
   const container = document.getElementById('go-tab-content');

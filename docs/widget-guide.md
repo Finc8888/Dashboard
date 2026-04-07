@@ -182,6 +182,77 @@ registerWidget({
 
 ---
 
+## Паттерн: внешняя граница для мульти-карточных виджетов
+
+Если виджет состоит из **нескольких карточек** (grid или flex), используй паттерн «контейнер + внутренние карточки». Примеры: `running`, `wod`, `personal-bar`, `stats`.
+
+### Два варианта компоновки
+
+| Тип | Когда использовать | Внешнее состояние |
+|-----|-------------------|-------------------|
+| **`.card`** | Виджет с единым контентом (список, текст, график) | `background + border + border-radius + padding: 20px + flex-column` |
+| **`.widget-container`** | Виджет из нескольких независимых карточек | `background + border + border-radius` — padding и layout задаёт сам виджет |
+
+### Как применить `.widget-container`
+
+**HTML** — добавить класс к корневому элементу виджета:
+```html
+<div class="my-widget widget-container" data-widget="my-widget">
+  <div class="widget-container-header">
+    <span class="card-title">📌 Мой виджет</span>
+  </div>
+  <div class="my-inner-card">...</div>
+  <div class="my-inner-card">...</div>
+</div>
+```
+
+**CSS виджета** — только уникальные свойства (фон/бордер/радиус уже в `.widget-container`):
+```css
+.my-widget {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  /* width/margin — если виджет вне .grid: */
+  width: calc(100% - 64px);
+  max-width: 1236px;
+  margin: 20px auto;
+}
+```
+
+**Внутренние карточки** — сохраняют собственный бордер для визуального разделения:
+```css
+.my-inner-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+```
+
+### `.widget-container-header`
+
+Служебный класс для заголовка внутри grid-контейнера — растягивает заголовок на все колонки:
+```css
+.widget-container-header { grid-column: 1 / -1; }
+```
+
+### Виджеты вне `.grid` (зона `top`)
+
+Виджеты в зоне `top` (до основного грида) должны выравниваться по ширине грида:
+```css
+.my-widget {
+  width: calc(100% - 64px);  /* 32px поля с каждой стороны */
+  max-width: 1236px;          /* 1300px - 2×32px padding грида */
+  margin: 20px auto;
+  overflow: hidden;           /* если есть вложенные absolute элементы */
+}
+```
+
+Брейкпоинты адаптивности совпадают с гридом: `calc(100% - 32px)` на `≤900px`, `calc(100% - 20px)` на `≤480px`.
+
+---
+
 ## Подключение в `index.html`
 
 ### CSS (в `<head>`)
@@ -243,8 +314,8 @@ registerWidget({
 
 - [ ] `www/js/widgets/widgets-config.json` — запись с id, label, zone, storageKeys, defaults
 - [ ] `www/js/widgets/<id>.js` — создан с `registerWidget({id, render, init})` в конце
-- [ ] `www/css/widgets/<id>.css` — стили виджета
-- [ ] `www/index.html` — HTML-блок с `data-widget="<id>"`
+- [ ] `www/css/widgets/<id>.css` — стили виджета (только уникальные свойства; фон/бордер/радиус — через `.card` или `.widget-container`)
+- [ ] `www/index.html` — HTML-блок с `data-widget="<id>"` и классом `.card` или `.widget-container`
 - [ ] `www/index.html` — `<script>` тег в секции Widgets
 - [ ] `www/index.html` — `<link>` тег в `<head>`
 - [ ] `dashboard-data-default.json` — добавить в `prod_widgets_gladys` order/visible

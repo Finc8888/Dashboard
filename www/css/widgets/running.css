@@ -1,13 +1,12 @@
 /* ── Running Section ─────────────────────────────────────────────────── */
 .running-section {
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(90deg, rgba(6,182,212,.04) 0%, rgba(34,197,94,.03) 100%);
   overflow: hidden;
+  width: calc(100% - 64px);
+  max-width: 1236px;
+  margin: 20px auto;
 }
 .running-inner {
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 20px 32px;
+  padding: 20px;
   display: flex;
   gap: 28px;
   align-items: flex-start;
@@ -571,4 +570,14 @@
   gap: 6px;
   flex-wrap: wrap;
   padding: 4px 0;
+}
+
+@media (max-width: 900px) {
+  .running-section { width: calc(100% - 32px); margin: 16px auto; }
+  .running-inner   { padding: 16px; gap: 16px; }
+  .running-grid    { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .running-section { width: calc(100% - 20px); }
+  .running-inner   { flex-direction: column; padding: 12px; }
 }

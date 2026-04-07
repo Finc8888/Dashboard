@@ -2,12 +2,11 @@
 .personal-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  max-width: 1300px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border);
+  width: calc(100% - 64px);
+  max-width: 1236px;
+  margin: 20px auto;
   gap: 12px;
+  padding: 16px;
 }
 .widget {
   background: var(--surface);
@@ -200,8 +199,11 @@
   cursor: default;
 }
 
+@media (max-width: 900px) {
+  .personal-bar { width: calc(100% - 32px); }
+}
 @media (max-width: 480px) {
-  .personal-bar { padding: 10px; gap: 10px; }
+  .personal-bar { width: calc(100% - 20px); gap: 10px; }
   .widget { padding: 10px 12px; gap: 10px; }
   .widget-value { font-size: 24px; }
   .widget-icon { font-size: 22px; }
