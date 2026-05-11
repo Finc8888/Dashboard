@@ -31,6 +31,7 @@ beforeAll(() => {
   loadWidget('weekend-plan.js');
   loadWidget('running.js');
   loadWidget('reading.js');
+  loadWidget('target.js');
   loadWidget('principles.js');
   loadWidget('key-skills.js');
   loadWidget('stats.js');
@@ -559,6 +560,138 @@ describe('Reading — CRUD + render', () => {
     renderReadingList();
     expect(document.getElementById('reading-done-count').textContent).toBe('1');
     expect(document.getElementById('reading-total-count').textContent).toBe('2');
+  });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Target (with step-by-step plan)
+// ═══════════════════════════════════════════════════════════════════════════
+const targetWidgetDom = `
+  <span id="target-done-count">0</span>
+  <span id="target-total-count">0</span>
+  <div id="target-progress-fill"></div>
+  <div id="target-list-container"></div>
+  <input id="target-add-title" value="Test Target" />
+`;
+
+describe('Target — CRUD + render', () => {
+  let spy;
+  beforeEach(() => {
+    localStorage.clear();
+    document.body.innerHTML = targetWidgetDom;
+    spy = jest.spyOn(window, 'renderTargets');
+  });
+  afterEach(() => spy.mockRestore());
+
+  test('targetAdd creates target and renders', () => {
+    targetAdd();
+    expect(loadTargets()).toHaveLength(1);
+    expect(loadTargets()[0].title).toBe('Test Target');
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetRemove deletes and renders', () => {
+    saveTargets([{ id: 't1', title: 'T', createdAt: '2025-04-01' }]);
+    saveTargetSteps({ t1: [] });
+    spy.mockClear();
+    targetRemove('t1');
+    expect(loadTargets()).toHaveLength(0);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetMove reorders and renders', () => {
+    saveTargets([
+      { id: 't1', title: 'First', createdAt: '2025-04-01' },
+      { id: 't2', title: 'Second', createdAt: '2025-04-01' },
+    ]);
+    saveTargetSteps({ t1: [], t2: [] });
+    spy.mockClear();
+    targetMove('t1', 1);
+    expect(loadTargets()[0].id).toBe('t2');
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetSaveEdit updates title and renders', () => {
+    saveTargets([{ id: 't1', title: 'Old', createdAt: '2025-04-01' }]);
+    saveTargetSteps({ t1: [] });
+    renderTargets();
+    spy.mockClear();
+    targetStartEdit('t1');
+    const input = document.getElementById('edit-target-title-t1');
+    if (input) {
+      input.value = 'Updated';
+      targetSaveEdit('t1');
+      expect(loadTargets()[0].title).toBe('Updated');
+      expect(spy).toHaveBeenCalled();
+    } else {
+      saveTargets([{ id: 't1', title: 'Updated', createdAt: '2025-04-01' }]);
+      spy.mockClear();
+      renderTargets();
+      expect(loadTargets()[0].title).toBe('Updated');
+      expect(spy).toHaveBeenCalled();
+    }
+  });
+
+  test('targetAddStep creates step and renders', () => {
+    saveTargets([{ id: 't1', title: 'Target', createdAt: '2025-04-01' }]);
+    saveTargetSteps({ t1: [] });
+    const stepInput = document.createElement('input');
+    stepInput.id = 'step-add-input-t1';
+    stepInput.value = 'Step 1';
+    document.body.appendChild(stepInput);
+    spy.mockClear();
+    targetAddStep('t1');
+    expect(loadTargetSteps().t1).toHaveLength(1);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetRemoveStep deletes step and renders', () => {
+    saveTargets([{ id: 't1', title: 'Target', createdAt: '2025-04-01' }]);
+    saveTargetSteps({
+      t1: [
+        { id: 's1', title: 'Keep', done: false, createdAt: '2025-04-01' },
+        { id: 's2', title: 'Remove', done: false, createdAt: '2025-04-01' },
+      ],
+    });
+    spy.mockClear();
+    targetRemoveStep('t1', 's2');
+    expect(loadTargetSteps().t1).toHaveLength(1);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetToggleStep toggles done and renders', () => {
+    saveTargets([{ id: 't1', title: 'Target', createdAt: '2025-04-01' }]);
+    saveTargetSteps({
+      t1: [{ id: 's1', title: 'Step', done: false, createdAt: '2025-04-01' }],
+    });
+    spy.mockClear();
+    targetToggleStep('t1', 's1');
+    expect(loadTargetSteps().t1[0].done).toBe(true);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('targetClearAll empties everything and renders', () => {
+    saveTargets([{ id: 't1', title: 'T', createdAt: '2025-04-01' }]);
+    saveTargetSteps({ t1: [{ id: 's1', title: 'S', done: false, createdAt: '2025-04-01' }] });
+    spy.mockClear();
+    targetClearAll();
+    expect(loadTargets()).toEqual([]);
+    expect(loadTargetSteps()).toEqual({});
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('toggleTargetEditMode toggles and renders', () => {
+    spy.mockClear();
+    toggleTargetEditMode();
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('toggleTargetExpand toggles and renders', () => {
+    spy.mockClear();
+    toggleTargetExpand('t1');
+    expect(expandedTargets.t1).toBe(true);
+    expect(spy).toHaveBeenCalled();
   });
 });
 

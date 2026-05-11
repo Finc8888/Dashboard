@@ -410,6 +410,13 @@ mindmap
       Page tracking
       Progress bar
       Expandable sub-items (сборники/трилогии)
+    Targets (Цели с планом)
+      Add / Edit / Delete / Reorder
+      Nested steps CRUD (вложенный план)
+      Edit mode toggle
+      Per-target progress bar + steps counter
+      Celebration overlay при выполнении всех шагов
+      Expand / collapse шагов
     Server Build
       Editable components table (CRUD)
       Status workflow (выбираю → выбрано → в корзине → заказано → куплено)
@@ -479,6 +486,8 @@ mindmap
 | `prod_schedule_labels_v1` | `{index: {label, sub}}` | Пользовательские названия окон расписания |
 | `prod_reading_books_v1` | `[{id, title, author, type, subItems?}]` | Список книг для чтения (пользовательский) |
 | `prod_reading_v1` | `{bookId: {status, page, startedAt}}` | Прогресс чтения (включая sub-items сборников/трилогий) |
+| `prod_targets_v1` | `[{id, title, createdAt}]` | Цели с пошаговым планом (CRUD) |
+| `prod_target_steps_v1` | `{targetId: [{id, title, done, createdAt}]}` | Шаги для каждой цели (вложенный CRUD) |
 | `prod_running_v1` | `{distId: [{secs, date, addedAt}]}` | Результаты бега |
 | `prod_wod_cache` | `{word, wordRu, ...}` | Кэш слова дня |
 | `prod_wod_archive_v1` | `[{word, date, ...}]` | Архив слов (90 дней) |

@@ -1,2 +1,4 @@
 .env
 www/quotes.json
+QWEN.md
+.qwen/

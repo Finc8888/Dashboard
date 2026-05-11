@@ -3,7 +3,7 @@
 // ── AI Assistant (Ollama / Gemma) ──────────────────────────────────────────
 const AI_HISTORY_KEY = 'prod_ai_history_v1';
 const AI_OLLAMA_URL = localStorage.getItem('prod_ai_ollama_url') || 'http://localhost:11434';
-const AI_MODEL = localStorage.getItem('prod_ai_model') || 'qwen3.5:4b';
+const AI_MODEL = localStorage.getItem('prod_ai_model') || 'jewelzufo/Qwen3-0.6B-GGUF:latest';
 const AI_CONTEXT_KEY = 'prod_ai_context_v1';
 
 function aiLoadHistory() { return loadJSON(AI_HISTORY_KEY, []); }

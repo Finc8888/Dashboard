@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/widgets/goals.css">
   <link rel="stylesheet" href="css/widgets/wod.css">
   <link rel="stylesheet" href="css/widgets/reading.css">
+  <link rel="stylesheet" href="css/widgets/target.css">
   <link rel="stylesheet" href="css/widgets/productivity.css">
   <link rel="stylesheet" href="css/widgets/running.css">
   <link rel="stylesheet" href="css/widgets/scratchpad.css">
@@ -527,6 +528,24 @@
       <div class="reading-books" id="reading-books"></div>
     </div>
 
+    <!-- Цели с планом -->
+    <div class="card" data-widget="target">
+      <div class="card-title-row">
+        <span class="card-title">🎯 Цели с планом</span>
+        <div class="target-header-actions">
+          <span class="target-summary">
+            <span id="target-done-count">0</span> / <span id="target-total-count">0</span> целей
+          </span>
+          <button class="target-action-btn" onclick="toggleTargetEditMode()" title="Редактировать цели">✎</button>
+          <button class="target-action-btn target-clear-btn" onclick="targetClearAll()" title="Очистить все">🗑</button>
+        </div>
+      </div>
+      <div class="target-progress-bar">
+        <div class="target-progress-fill" id="target-progress-fill"></div>
+      </div>
+      <div class="target-list" id="target-list-container"></div>
+    </div>
+
     <!-- Scratchpad -->
     <div class="card scratchpad-card" data-widget="scratchpad">
       <div class="card-title-row">
@@ -613,6 +632,7 @@
 <script src="js/widgets/goals.js"></script>
 <script src="js/widgets/stats.js"></script>
 <script src="js/widgets/reading.js"></script>
+<script src="js/widgets/target.js"></script>
 <script src="js/widgets/productivity.js"></script>
 <script src="js/widgets/go-roadmap.js"></script>
 <script src="js/widgets/scratchpad.js"></script>

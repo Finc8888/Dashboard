@@ -225,6 +225,16 @@
     }
   },
   {
+    "id": "target",
+    "label": "Цели с планом",
+    "zone": "full-width",
+    "storageKeys": ["prod_targets_v1", "prod_target_steps_v1"],
+    "defaults": {
+      "prod_targets_v1": [],
+      "prod_target_steps_v1": {}
+    }
+  },
+  {
     "id": "scratchpad",
     "label": "Быстрые заметки",
     "zone": "full-width",

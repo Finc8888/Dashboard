@@ -3,6 +3,9 @@
     file_server
     encode gzip
 
+    @widgets_config path /js/widgets/widgets-config.json
+    header @widgets_config Cache-Control "no-cache, must-revalidate"
+
     handle /data/training_schedule.csv {
         root * /srv/5run
         rewrite * /training_schedule.csv

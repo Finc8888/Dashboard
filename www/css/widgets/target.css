@@ -1,0 +1,455 @@
+/* ── Target Widget ─────────────────────────────────────────────────────────── */
+.target-summary {
+  font-size: 12px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.target-progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.target-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  border-radius: 2px;
+  transition: width .5s ease;
+  width: 0%;
+}
+
+.target-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.target-action-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  transition: color .15s, border-color .15s;
+}
+.target-action-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+.target-clear-btn:hover  { color: var(--red, #f87171); border-color: var(--red, #f87171); }
+
+/* ── List ─────────────────────────────────────────────────────────────────── */
+#target-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.target-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* ── Target item ──────────────────────────────────────────────────────────── */
+.target-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg, rgba(255,255,255,.03));
+  transition: border-color .2s;
+}
+.target-item:hover { border-color: var(--cyan); }
+.target-item.target-done { border-color: var(--purple); opacity: .7; }
+
+.target-expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  transition: color .15s, transform .2s;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.target-expand-btn:hover { color: var(--cyan); }
+.target-expand-btn.expanded { transform: rotate(90deg); color: var(--cyan); }
+
+.target-body { flex: 1; min-width: 0; }
+
+.target-main-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.target-num {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.target-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.target-done .target-title { text-decoration: line-through; color: var(--text-muted); }
+
+.target-steps-counter {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--border);
+  border-radius: 10px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+}
+
+.target-created {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── Per-target step progress bar ─────────────────────────────────────────── */
+.target-step-progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.target-step-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  border-radius: 2px;
+  transition: width .3s ease;
+}
+
+/* ── Edit-mode buttons (target) ───────────────────────────────────────────── */
+.target-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.target-move-btn,
+.target-edit-btn,
+.target-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+}
+.target-move-btn:hover  { color: var(--cyan); background: var(--border); }
+.target-move-btn:disabled { opacity: .3; cursor: default; }
+.target-edit-btn:hover  { color: var(--cyan); background: var(--border); }
+.target-remove-btn:hover { color: var(--red, #f87171); background: var(--border); }
+
+/* ── Inline edit form (target) ────────────────────────────────────────────── */
+.target-edit-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+.target-edit-input {
+  flex: 1;
+  background: var(--input-bg, rgba(255,255,255,.06));
+  border: 1px solid var(--cyan);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 4px 8px;
+  outline: none;
+}
+.target-edit-save,
+.target-edit-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 3px 8px;
+  transition: color .15s, border-color .15s;
+}
+.target-edit-save:hover   { color: var(--cyan); border-color: var(--cyan); }
+.target-edit-cancel:hover { color: var(--red, #f87171); border-color: var(--red, #f87171); }
+
+/* ── Steps list ───────────────────────────────────────────────────────────── */
+.target-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 4px 24px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border);
+  border-radius: 0 6px 6px 0;
+}
+
+.target-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  transition: background .15s;
+}
+.target-step-item:hover { background: var(--border); }
+
+.step-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color .15s, background .15s;
+  padding: 0;
+}
+.step-checkbox:hover { border-color: var(--cyan); }
+.step-checkbox.checked {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border-color: transparent;
+}
+.step-checkbox svg { display: none; }
+.step-checkbox.checked svg { display: block; }
+
+.step-title {
+  font-size: 13px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.step-done .step-title { text-decoration: line-through; color: var(--text-muted); }
+
+/* ── Edit-mode buttons (step) ─────────────────────────────────────────────── */
+.step-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.step-move-btn,
+.step-edit-btn,
+.step-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+}
+.step-move-btn:hover  { color: var(--cyan); background: rgba(255,255,255,.06); }
+.step-move-btn:disabled { opacity: .3; cursor: default; }
+.step-edit-btn:hover  { color: var(--cyan); background: rgba(255,255,255,.06); }
+.step-remove-btn:hover { color: var(--red, #f87171); background: rgba(255,255,255,.06); }
+
+/* ── Inline edit form (step) ──────────────────────────────────────────────── */
+.step-edit-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+.step-edit-input {
+  flex: 1;
+  background: var(--input-bg, rgba(255,255,255,.06));
+  border: 1px solid var(--cyan);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 3px 7px;
+  outline: none;
+}
+.step-edit-save,
+.step-edit-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 7px;
+  transition: color .15s, border-color .15s;
+}
+.step-edit-save:hover   { color: var(--cyan); border-color: var(--cyan); }
+.step-edit-cancel:hover { color: var(--red, #f87171); border-color: var(--red, #f87171); }
+
+/* ── Add step form ────────────────────────────────────────────────────────── */
+.target-step-add-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.target-step-add-input {
+  flex: 1;
+  background: var(--input-bg, rgba(255,255,255,.06));
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 4px 8px;
+  outline: none;
+  transition: border-color .15s;
+}
+.target-step-add-input:focus { border-color: var(--cyan); }
+.target-step-add-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 8px;
+  transition: color .15s, border-color .15s;
+}
+.target-step-add-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+/* ── Add target form ──────────────────────────────────────────────────────── */
+.target-add-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.target-add-input {
+  flex: 1;
+  background: var(--input-bg, rgba(255,255,255,.06));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color .15s;
+}
+.target-add-input:focus { border-color: var(--cyan); }
+.target-add-btn {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 14px;
+  transition: opacity .15s;
+}
+.target-add-btn:hover { opacity: .85; }
+
+/* ── Celebration overlay ──────────────────────────────────────────────────── */
+.target-celebration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity .3s ease;
+}
+
+.target-celebration-content {
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--purple);
+  border-radius: 16px;
+  padding: 40px 48px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 60px rgba(167,139,250,.3);
+}
+
+.target-celebration-icon { font-size: 56px; margin-bottom: 12px; }
+
+.target-celebration-title {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.target-celebration-name {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 6px;
+  max-width: 280px;
+}
+
+.target-celebration-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.target-celebration-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  transition: color .15s;
+}
+.target-celebration-close:hover { color: var(--text); }
+
+/* ── Particles ────────────────────────────────────────────────────────────── */
+.target-celebration-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.target-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  animation: particle-burst .8s ease-out calc(var(--i) * 40ms) forwards;
+  opacity: 0;
+}
+
+@keyframes particle-burst {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); opacity: 0; }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .target-steps-list { margin-left: 12px; }
+  .target-celebration-content { padding: 28px 24px; }
+  .target-celebration-name { max-width: 220px; }
+}
