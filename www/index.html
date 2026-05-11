@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/widgets/wod.css">
   <link rel="stylesheet" href="css/widgets/reading.css">
   <link rel="stylesheet" href="css/widgets/target.css">
+  <link rel="stylesheet" href="css/widgets/assembla.css">
   <link rel="stylesheet" href="css/widgets/productivity.css">
   <link rel="stylesheet" href="css/widgets/running.css">
   <link rel="stylesheet" href="css/widgets/scratchpad.css">
@@ -546,6 +547,62 @@
       <div class="target-list" id="target-list-container"></div>
     </div>
 
+    <!-- Assembla Tickets -->
+    <div class="card" data-widget="assembla">
+      <div class="card-title-row">
+        <span class="card-title">🎫 Assembla</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="a-settings-btn" onclick="aOpenSettings()" title="Настройки">⚙</button>
+          <button class="a-refresh-btn" onclick="aLoadTickets()" title="Обновить">↻</button>
+        </div>
+      </div>
+      <div class="a-toolbar">
+        <input class="a-search" id="a-search" type="text" placeholder="Поиск тикетов…" />
+        <select class="a-filter-sel" id="a-filter-report" onchange="aLoadTickets()">
+          <option value="all">Все</option>
+          <option value="mine">Мои</option>
+          <option value="followed">Слежу</option>
+        </select>
+        <select class="a-filter-sel" id="a-filter-status" onchange="aLoadTickets()">
+          <option value="">Все статусы</option>
+        </select>
+        <select class="a-filter-sel" id="a-filter-sort" onchange="aLoadTickets()">
+          <option value="updated">По дате</option>
+          <option value="priority">По приоритету</option>
+          <option value="number">По номеру</option>
+        </select>
+      </div>
+      <div class="a-panels">
+        <div class="a-list-panel">
+          <div class="a-ticket-list" id="a-ticket-list"></div>
+        </div>
+        <div class="a-detail-panel" id="a-detail-panel"></div>
+      </div>
+    </div>
+
+    <!-- Settings modal -->
+    <div class="a-modal-overlay" id="a-settings-modal" onclick="if(event.target===this)aCloseSettings()">
+      <div class="a-modal-box">
+        <div class="a-modal-title">⚙ Настройки Assembla</div>
+        <div class="a-field">
+          <label>API Key</label>
+          <input id="a-cfg-key" type="password" placeholder="X-Api-Key" autocomplete="off" />
+        </div>
+        <div class="a-field">
+          <label>API Secret</label>
+          <input id="a-cfg-secret" type="password" placeholder="X-Api-Secret" autocomplete="off" />
+        </div>
+        <div class="a-field">
+          <label>Space ID</label>
+          <input id="a-cfg-space" type="text" placeholder="my-space-id" />
+        </div>
+        <div class="a-modal-actions">
+          <button class="a-modal-cancel" onclick="aCloseSettings()">Отмена</button>
+          <button class="a-btn-primary" onclick="aSaveSettings()">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Scratchpad -->
     <div class="card scratchpad-card" data-widget="scratchpad">
       <div class="card-title-row">
@@ -633,6 +690,7 @@
 <script src="js/widgets/stats.js"></script>
 <script src="js/widgets/reading.js"></script>
 <script src="js/widgets/target.js"></script>
+<script src="js/widgets/assembla.js"></script>
 <script src="js/widgets/productivity.js"></script>
 <script src="js/widgets/go-roadmap.js"></script>
 <script src="js/widgets/scratchpad.js"></script>

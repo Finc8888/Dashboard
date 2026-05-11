@@ -225,6 +225,15 @@
     }
   },
   {
+    "id": "assembla",
+    "label": "Тикеты Assembla",
+    "zone": "full-width",
+    "storageKeys": ["prod_assembla_config_v1"],
+    "defaults": {
+      "prod_assembla_config_v1": {}
+    }
+  },
+  {
     "id": "target",
     "label": "Цели с планом",
     "zone": "full-width",
