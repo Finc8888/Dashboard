@@ -1,12 +1,251 @@
+{
+    auto_https off
+}
+
 :80 {
-    root * /srv/www
-    file_server
-    encode gzip
+    # -- Auth endpoints (public, no forward_auth) --
+    handle /api/auth/* {
+        reverse_proxy auth-gateway:8080
+    }
+
+    handle /api/health {
+        reverse_proxy auth-gateway:8080
+    }
+
+    # -- Admin API (protected by forward_auth + backend middleware) --
+    handle /api/admin/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        reverse_proxy auth-gateway:8080
+    }
+
+    # -- Admin Panel UI --
+    handle /admin/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/admin/
+                respond "" 302
+            }
+        }
+        @has_admin_perm header_regexp X-Auth-Permissions admin
+        handle @has_admin_perm {
+            uri strip_prefix /admin
+            reverse_proxy auth-admin:80
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /admin {
+        redir * /admin/ permanent
+    }
+
+    # -- Blog (wrapper with Dashboard link) --
+    handle /blog/ {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/blog/
+                respond "" 302
+            }
+        }
+        @has_blog_perm header_regexp X-Auth-Permissions blog
+        handle @has_blog_perm {
+            root * /srv/www
+            rewrite * /blog-wrapper.html
+            file_server
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /blog {
+        redir * /blog/ permanent
+    }
+    # -- Blog raw content (inside iframe) --
+    handle /blog-raw/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /blog-raw
+        reverse_proxy gladys-blog:80
+    }
+    handle /blog-raw {
+        redir * /blog-raw/ permanent
+    }
+
+    # -- Blog Admin API --
+    handle /blog-admin/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /blog-admin
+        reverse_proxy blog-admin:8083
+    }
+    # -- Blog Admin UI --
+    handle /blog-admin/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/blog-admin/
+                respond "" 302
+            }
+        }
+        @has_blog_admin header_regexp X-Auth-Role admin
+        handle @has_blog_admin {
+            uri strip_prefix /blog-admin
+            reverse_proxy blog-admin:8083
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /blog-admin {
+        redir * /blog-admin/ permanent
+    }
+
+    # -- Job Statistics API --
+    handle /jobs/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /jobs
+        reverse_proxy job-stats-api:8081
+    }
+    # -- Job Statistics UI --
+    handle /jobs/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/jobs/
+                respond "" 302
+            }
+        }
+        @has_jobs_perm header_regexp X-Auth-Permissions jobs
+        handle @has_jobs_perm {
+            uri strip_prefix /jobs
+            reverse_proxy job-stats-frontend:3000
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /jobs {
+        redir * /jobs/ permanent
+    }
+
+    # -- Sketchbook API --
+    handle /sketchbook/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /sketchbook
+        reverse_proxy sketchbook-api:8084
+    }
+    # -- Sketchbook UI --
+    handle /sketchbook/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/sketchbook/
+                respond "" 302
+            }
+        }
+        @has_sketchbook_perm header_regexp X-Auth-Permissions sketchbook
+        handle @has_sketchbook_perm {
+            uri strip_prefix /sketchbook
+            reverse_proxy sketchbook-frontend:3001
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /sketchbook {
+        redir * /sketchbook/ permanent
+    }
+
+    # -- Gladys Chat API + WebSocket --
+    handle /chat/api/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /chat
+        reverse_proxy gladys-chat-api:8082
+    }
+    handle /chat/ws {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+        }
+        uri strip_prefix /chat
+        reverse_proxy gladys-chat-api:8082
+    }
+    # -- Gladys Chat UI --
+    handle /chat/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+            copy_headers X-Auth-User X-Auth-Role X-Auth-Username X-Auth-Permissions
+            @unauthed status 401
+            handle_response @unauthed {
+                header Location /?redirect=/chat/
+                respond "" 302
+            }
+        }
+        @has_chat_perm header_regexp X-Auth-Permissions chat
+        handle @has_chat_perm {
+            uri strip_prefix /chat
+            reverse_proxy gladys-chat-frontend:80
+        }
+        handle {
+            root * /srv/www
+            rewrite * /403.html
+            file_server
+        }
+    }
+    handle /chat {
+        redir * /chat/ permanent
+    }
+
+    # -- Dashboard (default) --
+    handle {
+        reverse_proxy dashboard:80
+    }
+
+    encode gzip zstd
 
     header {
-        Cache-Control "no-cache, no-store, must-revalidate"
         X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
+    }
+    header /blog-raw/* {
+        X-Frame-Options "SAMEORIGIN"
     }
 
     log {

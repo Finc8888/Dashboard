@@ -1,10 +1,286 @@
 services:
-  dashboard:
+  # -- Gateway --
+  gateway:
     image: caddy:2-alpine
-    container_name: productivity-dashboard
+    container_name: gateway
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./www:/srv/www:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [gateway]
+    depends_on:
+      auth-gateway:
+        condition: service_healthy
+      dashboard:
+        condition: service_started
+
+  # -- Dashboard (static) --
+  dashboard:
+    image: caddy:2-alpine
+    container_name: dashboard
+    restart: unless-stopped
+    volumes:
+      - ./www:/srv/www:ro
+      - ./DashboardCaddyfile:/etc/caddy/Caddyfile:ro
+      - ${TRAINING_SCHEDULE_CSV}:/srv/5run/training_schedule.csv:ro
+      - ${RECORDS_CSV}:/srv/5run/records_sorted.csv:ro
+    networks: [gateway]
+
+  # -- Auth Gateway Backend --
+  auth-gateway:
+    build: ../Auth-Gateway/backend
+    container_name: auth-gateway
+    restart: unless-stopped
+    environment:
+      DB_HOST: auth-db
+      DB_PORT: "3306"
+      DB_USER: ${AUTH_DB_USER:-appuser}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:-secret}
+      DB_NAME: ${AUTH_DB_NAME:-authdb}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: "8080"
+    networks: [gateway, auth-internal]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -- Auth Gateway Frontend (admin panel) --
+  auth-admin:
+    build: ../Auth-Gateway/frontend
+    container_name: auth-admin
+    restart: unless-stopped
+    networks: [gateway]
+
+  # -- Auth DB --
+  auth-db:
+    image: mysql:8.0
+    container_name: auth-db
+    restart: unless-stopped
+    ports:
+      - "7771:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${AUTH_DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${AUTH_DB_NAME:-authdb}
+      MYSQL_USER: ${AUTH_DB_USER:-appuser}
+      MYSQL_PASSWORD: ${AUTH_DB_PASSWORD:-secret}
+    volumes:
+      - auth_data:/var/lib/mysql
+      - ../Auth-Gateway/backend/migrations:/docker-entrypoint-initdb.d:ro
+    networks: [auth-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # -- Gladys Blog (Nginx serving Hugo output) --
+  gladys-blog:
+    image: nginx:alpine
+    container_name: gladys-blog
+    restart: unless-stopped
+    volumes:
+      - blog_public:/usr/share/nginx/html:ro
+    networks: [gateway]
+    profiles: ["blog"]
+
+  # -- Blog Admin API (CRUD + Hugo rebuild) --
+  blog-admin:
+    build:
+      context: ../Gladys-Blog
+      dockerfile: blog-admin/Dockerfile
+    container_name: blog-admin
+    restart: unless-stopped
+    environment:
+      CONTENT_DIR: /blog/content/post
+      HUGO_DIR: /blog
+      API_PORT: "8083"
+      STATIC_DIR: /app/static
+      HUGO_BASEURL: ${HUGO_BASEURL:-http://localhost/blog-raw/}
+    volumes:
+      - blog_content:/blog
+      - blog_public:/blog/public
+    networks: [gateway]
+    profiles: ["blog"]
+
+  # -- Job Statistics Frontend --
+  job-stats-frontend:
+    build:
+      context: ../job-statistics-platform/frontend
+      args:
+        API_BASE_URL: ""
+    container_name: job-stats-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["jobs"]
+
+  # -- Job Statistics API --
+  job-stats-api:
+    build: ../job-statistics-platform/backend
+    container_name: job-stats-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: job-stats-db
+      DB_PORT: "3306"
+      DB_USER: ${JOBS_DB_USER:-jobuser}
+      DB_PASSWORD: ${JOBS_DB_PASSWORD:-jobpassword}
+      DB_NAME: ${JOBS_DB_NAME:-job_stats}
+      API_PORT: "8081"
+    networks: [gateway, jobs-internal]
+    depends_on:
+      job-stats-db:
+        condition: service_healthy
+    profiles: ["jobs"]
+
+  # -- Job Statistics DB --
+  job-stats-db:
+    image: mysql:8.0
+    container_name: job-stats-db
+    restart: unless-stopped
+    ports:
+      - "7772:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${JOBS_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${JOBS_DB_NAME:-job_stats}
+      MYSQL_USER: ${JOBS_DB_USER:-jobuser}
+      MYSQL_PASSWORD: ${JOBS_DB_PASSWORD:-jobpassword}
+    volumes:
+      - jobs_data:/var/lib/mysql
+      - ../job-statistics-platform/backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [jobs-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["jobs"]
+
+  # -- Gladys Chat Frontend --
+  gladys-chat-frontend:
+    build: ../Gladys-Chat/frontend
+    container_name: gladys-chat-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["chat"]
+
+  # -- Gladys Chat API --
+  gladys-chat-api:
+    build: ../Gladys-Chat/backend
+    container_name: gladys-chat-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: gladys-chat-db
+      DB_PORT: "3306"
+      DB_USER: ${CHAT_DB_USER:-gladys}
+      DB_PASSWORD: ${CHAT_DB_PASSWORD:-gladyspassword}
+      DB_NAME: ${CHAT_DB_NAME:-gladys_chat}
+      API_PORT: "8082"
+    networks: [gateway, chat-internal]
+    depends_on:
+      gladys-chat-db:
+        condition: service_healthy
+    profiles: ["chat"]
+
+  # -- Gladys Chat DB --
+  gladys-chat-db:
+    image: mysql:8.0
+    container_name: gladys-chat-db
+    restart: unless-stopped
+    ports:
+      - "7773:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CHAT_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${CHAT_DB_NAME:-gladys_chat}
+      MYSQL_USER: ${CHAT_DB_USER:-gladys}
+      MYSQL_PASSWORD: ${CHAT_DB_PASSWORD:-gladyspassword}
+    volumes:
+      - chat_data:/var/lib/mysql
+      - ../Gladys-Chat/backend/migrations/001_create_tables.sql:/docker-entrypoint-initdb.d/001_create_tables.sql:ro
+      - ../Gladys-Chat/backend/migrations/002_centralize_auth.sql:/docker-entrypoint-initdb.d/002_centralize_auth.sql:ro
+      - ../Gladys-Chat/backend/migrations/003_add_user_role.sql:/docker-entrypoint-initdb.d/003_add_user_role.sql:ro
+    networks: [chat-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["chat"]
+
+  # -- Sketchbook Frontend --
+  sketchbook-frontend:
+    build: ../sketchbook/frontend
+    container_name: sketchbook-frontend
+    restart: unless-stopped
+    networks: [gateway]
+    profiles: ["sketchbook"]
+
+  # -- Sketchbook API --
+  sketchbook-api:
+    build: ../sketchbook/backend
+    container_name: sketchbook-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: sketchbook-db
+      DB_PORT: "3306"
+      DB_USER: ${SKETCH_DB_USER:-sketchuser}
+      DB_PASSWORD: ${SKETCH_DB_PASSWORD:-sketchpassword}
+      DB_NAME: ${SKETCH_DB_NAME:-sketchbook}
+      API_PORT: "8084"
+    networks: [gateway, sketchbook-internal]
+    depends_on:
+      sketchbook-db:
+        condition: service_healthy
+    profiles: ["sketchbook"]
+
+  # -- Sketchbook DB --
+  sketchbook-db:
+    image: mysql:8.0
+    container_name: sketchbook-db
+    restart: unless-stopped
+    ports:
+      - "7774:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SKETCH_DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${SKETCH_DB_NAME:-sketchbook}
+      MYSQL_USER: ${SKETCH_DB_USER:-sketchuser}
+      MYSQL_PASSWORD: ${SKETCH_DB_PASSWORD:-sketchpassword}
+    volumes:
+      - sketchbook_data:/var/lib/mysql
+      - ../sketchbook/backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [sketchbook-internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    profiles: ["sketchbook"]
+
+networks:
+  gateway:
+    name: productivity_gateway
+  auth-internal:
+  jobs-internal:
+  chat-internal:
+    name: productivity_chat-internal
+  sketchbook-internal:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  auth_data:
+  chat_data:
+  blog_content:
+  blog_public:
+  jobs_data:
+    external: true
+    name: job-statistics-platform_mysql_data
+  sketchbook_data:

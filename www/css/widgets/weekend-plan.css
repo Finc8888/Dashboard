@@ -1,0 +1,126 @@
+/* ── Weekend Plan (План выходного дня) ────────────────────────────────── */
+.wp-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--purple) 30%, var(--border));
+  background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--purple) 6%, var(--surface)) 100%);
+}
+.wp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--purple), color-mix(in srgb, var(--purple) 40%, var(--cyan)));
+  border-radius: 12px 12px 0 0;
+}
+
+.wp-progress-text             { font-size: 12px; color: var(--muted); }
+.wp-progress-text .done-count { color: var(--purple); font-weight: 600; }
+
+.wp-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.wp-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+  font-family: inherit;
+}
+.wp-input:focus       { border-color: var(--purple); }
+.wp-input::placeholder { color: var(--muted); }
+
+.wp-add-btn {
+  background: var(--purple);
+  border: none;
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  color: #0f1117;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .15s;
+}
+.wp-add-btn:hover { opacity: .8; }
+
+.wp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 2px;
+}
+.wp-list::-webkit-scrollbar       { width: 4px; }
+.wp-list::-webkit-scrollbar-track { background: transparent; }
+.wp-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.wp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  transition: opacity .2s, border-color .15s;
+}
+.wp-item:hover        { border-color: color-mix(in srgb, var(--purple) 40%, var(--border)); }
+.wp-item.done         { opacity: .45; }
+.wp-item.done .wp-text { text-decoration: line-through; }
+.wp-item.dragging     { opacity: .3; }
+.wp-item.drag-over    { border-color: var(--purple); }
+
+.wp-checkbox {
+  width: 18px; height: 18px;
+  border: 2px solid var(--purple);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.wp-checkbox svg       { display: none; }
+.wp-item.done .wp-checkbox {
+  background: var(--purple);
+  border-color: var(--purple);
+}
+.wp-item.done .wp-checkbox svg { display: block; }
+
+.wp-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* ── Weekend Plan Expand / Fullscreen ────────────────────────────────── */
+.wp-card.wp-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  border-radius: 0;
+  border: none;
+  overflow-y: auto;
+  padding: 32px 48px;
+  background: var(--bg);
+}
+.wp-card.wp-fullscreen .wp-list {
+  max-height: none;
+  flex: 1;
+}
+.wp-card.wp-fullscreen .wp-input { font-size: 15px; padding: 10px 14px; }
+.wp-card.wp-fullscreen .wp-item  { padding: 10px 12px; }
+.wp-card.wp-fullscreen .card-title { font-size: 16px; }
+
+@media (max-width: 480px) {
+  .wp-card.wp-fullscreen { padding: 16px; }
+}

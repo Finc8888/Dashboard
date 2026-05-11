@@ -1,0 +1,272 @@
+[
+  {
+    "id": "quote",
+    "label": "Цитата из бесед Аристотеля",
+    "zone": "top",
+    "storageKeys": [],
+    "defaults": {}
+  },
+  {
+    "id": "personal-bar",
+    "label": "Дни / Подушка / Ипотека",
+    "zone": "top",
+    "storageKeys": ["prod_days_v1", "prod_cushions", "prod_mortgage_v1"],
+    "defaults": {
+      "prod_days_v1": {},
+      "prod_cushions": 0,
+      "prod_mortgage_v1": {}
+    }
+  },
+  {
+    "id": "running",
+    "label": "Прогресс в беге",
+    "zone": "top",
+    "storageKeys": ["prod_running_v1"],
+    "defaults": {
+      "prod_running_v1": {}
+    }
+  },
+  {
+    "id": "schedule",
+    "label": "Ежедневный распорядок",
+    "zone": "grid",
+    "storageKeys": ["prod_schedule_labels_v1"],
+    "defaults": {
+      "prod_schedule_labels_v1": {
+        "0":  { "label": "Подъём",                    "sub": "Вода · зарядка · завтрак без телефона" },
+        "1":  { "label": "🔴 DEEP WORK #1",           "sub": "Рабочие задачи (2 часа)" },
+        "2":  { "label": "Перерыв",                   "sub": "Прогулка — не YouTube" },
+        "3":  { "label": "🟡 DEEP WORK #2",           "sub": "45 минут чистого Go" },
+        "4":  { "label": "Рабочие задачи",            "sub": "Средний приоритет" },
+        "5":  { "label": "Обед",                      "sub": "Полноценный отдых — не работа" },
+        "6":  { "label": "Рабочие задачи",            "sub": "Код-ревью · email · Jira" },
+        "7":  { "label": "Перерыв",                   "sub": "" },
+        "8":  { "label": "🟢 Эксперименты",           "sub": "Рефакторинг · новые концепции" },
+        "9":  { "label": "Свободное время",           "sub": "YouTube разрешён в этом окне" },
+        "10": { "label": "Подготовка к бегу",         "sub": "Лёгкий перекус" },
+        "11": { "label": "🏃 Бег",                    "sub": "Вечерняя пробежка" },
+        "12": { "label": "📱 Duolingo",               "sub": "Hard mode · не пропускать" },
+        "13": { "label": "Планирование завтра",       "sub": "10–15 минут · 3 выполненных дела" },
+        "14": { "label": "📖 Вечернее чтение",        "sub": "По списку · бумага или e-ink" },
+        "15": { "label": "😴 Сон",                    "sub": "" }
+      }
+    }
+  },
+  {
+    "id": "todo",
+    "label": "TODO список",
+    "zone": "grid",
+    "storageKeys": ["prod_tasks_v1", "prod_history_v1"],
+    "defaults": {
+      "prod_tasks_v1": [],
+      "prod_history_v1": []
+    }
+  },
+  {
+    "id": "principles",
+    "label": "Ключевые принципы",
+    "zone": "grid",
+    "storageKeys": ["prod_principles_v1"],
+    "defaults": {
+      "prod_principles_v1": [
+        { "id": "p1", "icon": "🎯", "title": "Одна главная задача дня",       "desc": "Выполни её до обеда — всё остальное бонус",           "color": "red" },
+        { "id": "p2", "icon": "⏱",  "title": "Правило «2-минутного старта»",  "desc": "Просто открой файл и напиши одну строку",             "color": "yellow" },
+        { "id": "p3", "icon": "📗", "title": "Код через работу",              "desc": "Переписывай рабочие утилиты — не абстрактные туториалы", "color": "green" },
+        { "id": "p4", "icon": "📵", "title": "YouTube только 16:00–18:30",    "desc": "Остальное время — блокировщик. Утро — без телефона",    "color": "blue" },
+        { "id": "p5", "icon": "🏃", "title": "Пропуск — норма, не катастрофа", "desc": "Не добавляй интенсивность резко — это мешает сну",    "color": "purple" }
+      ]
+    }
+  },
+  {
+    "id": "stickers",
+    "label": "Доска напоминаний",
+    "zone": "grid",
+    "storageKeys": ["prod_stickers_v1"],
+    "defaults": {}
+  },
+  {
+    "id": "weekend-plan",
+    "label": "План выходного дня",
+    "zone": "grid",
+    "storageKeys": ["prod_weekend_tasks_v1"],
+    "defaults": {}
+  },
+  {
+    "id": "key-skills",
+    "label": "Ключевые навыки",
+    "zone": "grid",
+    "storageKeys": ["prod_key_skills_v1"],
+    "defaults": {}
+  },
+  {
+    "id": "go-roadmap",
+    "label": "Прогресс в Go",
+    "zone": "full-width",
+    "storageKeys": ["prod_go_lessons_v1", "prod_go_tour_v1", "prod_go_code_v1", "prod_go_start_date"],
+    "defaults": {
+      "prod_go_lessons_v1": {},
+      "prod_go_start_date": ""
+    }
+  },
+  {
+    "id": "productivity",
+    "label": "Статистика продуктивности",
+    "zone": "full-width",
+    "storageKeys": ["prod_daily_snapshot_v1"],
+    "defaults": {
+      "prod_daily_snapshot_v1": {}
+    }
+  },
+  {
+    "id": "stats",
+    "label": "Отвлечения / Duolingo / Ранний старт",
+    "zone": "full-width",
+    "storageKeys": ["prod_early_start_v1", "prod_distractions_v1"],
+    "defaults": {
+      "prod_early_start_v1": {},
+      "prod_distractions_v1": {}
+    }
+  },
+  {
+    "id": "monthly-goals",
+    "label": "Цели на месяц",
+    "zone": "full-width",
+    "storageKeys": ["prod_monthly_goals_v2"],
+    "defaults": {
+      "prod_monthly_goals_v2": {}
+    }
+  },
+  {
+    "id": "yearly-goals",
+    "label": "Цели на год",
+    "zone": "full-width",
+    "storageKeys": ["prod_yearly_goals_v2"],
+    "defaults": {
+      "prod_yearly_goals_v2": {}
+    }
+  },
+  {
+    "id": "reading",
+    "label": "Список чтения",
+    "zone": "full-width",
+    "storageKeys": ["prod_reading_v1", "prod_reading_books_v1"],
+    "defaults": {
+      "prod_reading_v1": {},
+      "prod_reading_books_v1": [
+        {
+          "id": "chan-1",
+          "title": "История твоей жизни",
+          "author": "Тед Чан",
+          "type": "сборник",
+          "subItems": [
+            { "id": "chan-1-s1", "title": "Вавилонская башня" },
+            { "id": "chan-1-s2", "title": "Понимай" },
+            { "id": "chan-1-s3", "title": "Деление на ноль" },
+            { "id": "chan-1-s4", "title": "История твоей жизни" },
+            { "id": "chan-1-s5", "title": "Семьдесят две буквы" },
+            { "id": "chan-1-s6", "title": "Эволюция человеческой науки" },
+            { "id": "chan-1-s7", "title": "Ад — это отсутствие Бога" },
+            { "id": "chan-1-s8", "title": "Тебе нравится, что ты видишь?" }
+          ]
+        },
+        {
+          "id": "chan-2",
+          "title": "Выдох",
+          "author": "Тед Чан",
+          "type": "сборник",
+          "subItems": [
+            { "id": "chan-2-s1", "title": "Купец и волшебные врата" },
+            { "id": "chan-2-s2", "title": "Выдох" },
+            { "id": "chan-2-s3", "title": "Чего от нас ждут" },
+            { "id": "chan-2-s4", "title": "Жизненный цикл программных объектов" },
+            { "id": "chan-2-s5", "title": "Дейси, переменная" },
+            { "id": "chan-2-s6", "title": "Истина факта, истина чувства" },
+            { "id": "chan-2-s7", "title": "Великое молчание" },
+            { "id": "chan-2-s8", "title": "Ома" },
+            { "id": "chan-2-s9", "title": "Тревога — это головокружение свободы" }
+          ]
+        },
+        { "id": "leguin-1", "title": "Обездоленный", "author": "Урсула Ле Гуин", "type": "роман" },
+        { "id": "leguin-2", "title": "Левая рука тьмы", "author": "Урсула Ле Гуин", "type": "роман" },
+        {
+          "id": "leguin-3",
+          "title": "Волшебник Земноморья",
+          "author": "Урсула Ле Гуин",
+          "type": "трилогия",
+          "subItems": [
+            { "id": "leguin-3-s1", "title": "Волшебник Земноморья" },
+            { "id": "leguin-3-s2", "title": "Гробницы Атуана" },
+            { "id": "leguin-3-s3", "title": "На последнем берегу" }
+          ]
+        },
+        {
+          "id": "lem-1",
+          "title": "Кибериада",
+          "author": "Станислав Лем",
+          "type": "сборник",
+          "subItems": [
+            { "id": "lem-1-s1", "title": "Как уцелела Вселенная" },
+            { "id": "lem-1-s2", "title": "Три электрорыцаря" },
+            { "id": "lem-1-s3", "title": "Путешествие первое" },
+            { "id": "lem-1-s4", "title": "Путешествие второе" },
+            { "id": "lem-1-s5", "title": "Путешествие третье" },
+            { "id": "lem-1-s6", "title": "Путешествие четвёртое" },
+            { "id": "lem-1-s7", "title": "Путешествие пятое" },
+            { "id": "lem-1-s8", "title": "Путешествие шестое" },
+            { "id": "lem-1-s9", "title": "Путешествие седьмое" },
+            { "id": "lem-1-s10", "title": "Альтруизин" }
+          ]
+        },
+        { "id": "lem-2", "title": "Непобедимый", "author": "Станислав Лем", "type": "роман" },
+        { "id": "hofstadter", "title": "Гёдель, Эшер, Бах", "author": "Дуглас Хофштадтер", "type": "нон-фикшн" },
+        { "id": "csikszentmihalyi", "title": "Поток", "author": "Михай Чиксентмихайи", "type": "нон-фикшн" },
+        { "id": "lem-3", "title": "Солярис", "author": "Станислав Лем", "type": "роман" }
+      ]
+    }
+  },
+  {
+    "id": "scratchpad",
+    "label": "Быстрые заметки",
+    "zone": "full-width",
+    "storageKeys": ["prod_scratchpad_v1"],
+    "defaults": {
+      "prod_scratchpad_v1": {}
+    }
+  },
+  {
+    "id": "server-build",
+    "label": "Сборка сервера",
+    "zone": "full-width",
+    "storageKeys": ["prod_server_build_v1", "prod_server_models_v1"],
+    "defaults": {
+      "prod_server_build_v1": [
+        { "id": "sb-gpu",   "component": "GPU",                "model": "Gainward GeForce RTX 3090 Phantom GS 24GB", "price": "~89 000 ₽", "link": "https://www.ozon.ru/product/gainward-videokarta-geforce-rtx-3090-24-gb-ned3090019sb-132bx-lhr-3757252538/", "status": "выбрано" },
+        { "id": "sb-cpu",   "component": "CPU",                "model": "Intel Core i5-12400F",                       "price": "~13 000 ₽", "link": "",  "status": "выбрано" },
+        { "id": "sb-mobo",  "component": "Материнская плата",  "model": "ATX B660 (LGA 1700)",                        "price": "~8 000 ₽",  "link": "",  "status": "выбираю" },
+        { "id": "sb-ram",   "component": "RAM",                "model": "32 GB DDR4-3200 (2x16 GB)",                  "price": "~6 000 ₽",  "link": "",  "status": "выбираю" },
+        { "id": "sb-ssd",   "component": "SSD",                "model": "512 GB NVMe M.2",                            "price": "~3 500 ₽",  "link": "",  "status": "выбираю" },
+        { "id": "sb-psu",   "component": "БП",                 "model": "750W 80+ Gold",                              "price": "~6 500 ₽",  "link": "",  "status": "выбираю" },
+        { "id": "sb-case",  "component": "Корпус",             "model": "ATX Mid-Tower (airflow)",                    "price": "~3 000 ₽",  "link": "",  "status": "выбираю" }
+      ],
+      "prod_server_models_v1": [
+        { "id": "sm-1",  "name": "Qwen 2.5 32B Q4",           "size": "~20 GB", "vram": "20 GB",            "speed": "20-25",  "quality": "Отличное" },
+        { "id": "sm-2",  "name": "Qwen 2.5 14B Q4",           "size": "~9 GB",  "vram": "9 GB",             "speed": "40-50",  "quality": "Очень хорошее" },
+        { "id": "sm-3",  "name": "Llama 3.1 70B Q4",          "size": "~40 GB", "vram": "24 GB + offload",  "speed": "6-10",   "quality": "Отличное" },
+        { "id": "sm-4",  "name": "Llama 3.1 8B Q4",           "size": "~5 GB",  "vram": "5 GB",             "speed": "60-80",  "quality": "Хорошее" },
+        { "id": "sm-5",  "name": "Mistral 7B Q4",             "size": "~4 GB",  "vram": "4 GB",             "speed": "70-90",  "quality": "Хорошее" },
+        { "id": "sm-6",  "name": "Mistral Nemo 12B Q4",       "size": "~7 GB",  "vram": "7 GB",             "speed": "45-55",  "quality": "Очень хорошее" },
+        { "id": "sm-7",  "name": "DeepSeek-R1 32B Q4",        "size": "~20 GB", "vram": "20 GB",            "speed": "18-22",  "quality": "Отличное" },
+        { "id": "sm-8",  "name": "DeepSeek-Coder-V2 16B Q4",  "size": "~10 GB", "vram": "10 GB",            "speed": "35-45",  "quality": "Очень хорошее (код)" },
+        { "id": "sm-9",  "name": "Gemma 3 27B Q4",            "size": "~17 GB", "vram": "17 GB",            "speed": "15-20",  "quality": "Отличное" },
+        { "id": "sm-10", "name": "Gemma 3 12B Q4",            "size": "~8 GB",  "vram": "8 GB",             "speed": "40-50",  "quality": "Очень хорошее" }
+      ]
+    }
+  },
+  {
+    "id": "ai-assistant",
+    "label": "AI Ассистент (Gemma)",
+    "zone": "full-width",
+    "storageKeys": ["prod_ai_history_v1"],
+    "defaults": {}
+  }
+]

@@ -1,0 +1,126 @@
+/* ── Timeline ────────────────────────────────────────────────────────── */
+.schedule { grid-row: span 2; }
+
+.timeline { position: relative; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 56px;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.slot {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 7px 4px;
+  position: relative;
+  transition: opacity .3s;
+  border-radius: 8px;
+}
+.slot.past    { opacity: .32; }
+.slot.active .slot-label { color: var(--cyan); font-weight: 600; }
+.slot.active .slot-dot   { animation: dotPulse 2.4s ease-in-out infinite; }
+.slot.entering            { animation: slotActivate 1.6s ease-out forwards; }
+
+.slot-time {
+  width: 52px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.slot-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+.dot-red    { background: var(--red); }
+.dot-yellow { background: var(--yellow); }
+.dot-green  { background: var(--green); }
+.dot-blue   { background: var(--blue); }
+.dot-purple { background: var(--purple); }
+.dot-cyan   { background: var(--cyan); }
+.dot-muted  { background: var(--muted); }
+
+.slot-content { flex: 1; min-width: 0; }
+.slot-label { font-size: 13px; line-height: 1.4; display: flex; align-items: center; gap: 6px; }
+.slot-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.slot-rename-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s, color .15s;
+  padding: 0 2px;
+  line-height: 1;
+}
+.slot:hover .slot-rename-btn { opacity: 0.6; }
+.slot-rename-btn:hover { opacity: 1 !important; color: var(--cyan); }
+
+.slot-edit-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--fg);
+  outline: none;
+  min-width: 0;
+  width: 100%;
+  margin-bottom: 3px;
+}
+.slot-edit-input:focus { border-color: var(--cyan); }
+.slot-edit-sub { font-size: 11px; }
+.slot-edit-ok, .slot-edit-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .15s;
+  margin-top: 2px;
+}
+.slot-edit-ok:hover { color: var(--green); border-color: var(--green); }
+.slot-edit-cancel:hover { color: var(--red); border-color: var(--red); }
+
+.now-marker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+.now-marker::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cyan);
+  opacity: .5;
+}
+.now-badge {
+  font-size: 11px;
+  color: var(--cyan);
+  font-weight: 700;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  animation: nowBlink 1.9s ease-in-out infinite;
+}
+
+@media (max-width: 480px) {
+  .slot { gap: 10px; padding: 5px 2px; }
+  .slot-time { width: 40px; font-size: 11px; }
+  .timeline::before { left: 44px; }
+  .slot-label { font-size: 12px; }
+}

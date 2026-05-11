@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gladys Blog</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+.blog-nav{display:flex;align-items:center;gap:12px;padding:8px 24px;background:#1a1d27;border-bottom:1px solid #2a2d3e}
+.blog-nav a{display:inline-flex;align-items:center;padding:5px 12px;font-size:13px;color:#06b6d4;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);border-radius:6px;text-decoration:none;font-family:system-ui,sans-serif;transition:background .15s}
+.blog-nav a:hover{background:rgba(6,182,212,.18)}
+.blog-nav span{color:#64748b;font-size:12px;font-family:system-ui,sans-serif}
+iframe{width:100%;height:calc(100vh - 42px);border:none}
+</style>
+</head>
+<body>
+<div class="blog-nav">
+  <a href="/" title="Gladys Dashboard"><img src="/img/logo.png" alt="Gladys" style="width:24px;height:24px;border-radius:5px;object-fit:cover"></a>
+  <span style="font-family:'Orbitron',sans-serif;font-weight:700;background:linear-gradient(135deg,#06b6d4,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;font-size:14px">Gladys Blog</span>
+</div>
+<iframe id="blog-frame" src="/blog-raw/"></iframe>
+</body>
+</html>

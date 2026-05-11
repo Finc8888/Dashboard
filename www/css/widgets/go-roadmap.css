@@ -1,0 +1,180 @@
+/* ── Go Roadmap (Interactive) ─────────────────────────────────────── */
+.go-roadmap-card { position: relative; }
+.go-progress-summary { font-size: 13px; color: var(--green); font-weight: 600; }
+.go-tabs {
+  display: flex; gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.go-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  transition: all .15s;
+}
+.go-tab:hover { color: var(--text); }
+.go-tab.active {
+  color: var(--green);
+  border-color: var(--border);
+  border-bottom-color: var(--bg);
+  background: var(--bg);
+}
+.go-lesson-item, .go-tour-item, .go-code-item, .go-book-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--bg);
+  transition: background .15s;
+}
+.go-lesson-item:hover, .go-tour-item:hover, .go-code-item:hover { background: rgba(255,255,255,.03); }
+.go-lesson-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.go-lesson-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 12px;
+  transition: all .15s;
+}
+.go-lesson-check.done { border-color: var(--green); background: var(--green); color: var(--bg); }
+.go-lesson-num {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 20px;
+}
+.go-lesson-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+}
+.go-lesson-title.done { text-decoration: line-through; opacity: .5; }
+.go-lesson-meta {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex; gap: 8px;
+}
+.go-lesson-locked {
+  font-size: 11px;
+  color: var(--muted);
+  opacity: .5;
+}
+.go-lesson-locked .go-lesson-title { opacity: .4; }
+.go-lesson-body {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.go-step {
+  margin-bottom: 14px;
+}
+.go-step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cyan);
+  margin-bottom: 4px;
+}
+.go-step-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.go-step-code {
+  background: #0d0f14;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--cyan);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.go-takeaways {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(34,197,94,.05);
+  border-left: 3px solid var(--green);
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.go-code-study-list { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.go-tour-link {
+  font-size: 11px;
+  color: var(--blue);
+  text-decoration: none;
+  margin-left: 8px;
+}
+.go-tour-link:hover { text-decoration: underline; }
+.go-book-stage {
+  font-size: 10px;
+  background: rgba(167,139,250,.15);
+  color: var(--purple);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.go-book-author {
+  font-size: 12px;
+  color: var(--muted);
+}
+.go-section-progress {
+  margin-bottom: 10px;
+}
+.go-section-progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.go-section-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+
+@media (max-width: 900px) {
+  .running-grid  { grid-template-columns: repeat(2, 1fr); }
+  .running-inner { flex-direction: column; gap: 16px; padding: 16px; }
+  .tw-week-schedule { flex-wrap: wrap; }
+  .tw-day { flex: 0 0 calc(25% - 3px); }
+  .tt-header-actions { margin-left: 0; }
+  .tt-header { gap: 8px; }
+  .records-modal-content { max-width: 100%; max-height: 90vh; }
+  .records-table { font-size: 11px; }
+  .ws-panel { max-width: 100%; }
+  .go-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 2px; }
+  .go-tab { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .running-grid { grid-template-columns: 1fr; gap: 8px; }
+  .running-inner { padding: 12px; gap: 12px; }
+  .running-left { flex-direction: row; gap: 12px; align-items: center; }
+  .running-section-title { text-align: left; }
+  .running-figure { width: 36px; height: 48px; }
+  .tw-day { flex: 0 0 calc(50% - 2px); }
+  .run-time-main { font-size: 18px; }
+  .run-card { padding: 10px 8px 8px; }
+  .go-tab { font-size: 11px; padding: 4px 8px; }
+  .go-lesson-meta { display: none; }
+  .go-step-code { font-size: 11px; padding: 8px 10px; }
+  .records-modal-content { border-radius: 0; max-height: 100vh; }
+  .records-filters { flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .records-legend { flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+}

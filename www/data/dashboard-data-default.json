@@ -1,0 +1,49 @@
+{
+  "prod_admin_only_widgets": ["running", "go-roadmap"],
+  "prod_briefing_dismissed": "",
+  "prod_notif_enabled": 0,
+  "gladys_private_key": {},
+  "prod_wod_cache": {},
+  "gladys_user": {},
+  "gladys_public_key": {},
+  "gladys_token": "",
+  "data-color-mode": "dark",
+  "prod_retrospective_v1": {},
+  "prod_wod_archive_v1": [],
+  "prod_widgets_gladys": {
+    "order": [
+      "quote",
+      "personal-bar",
+      "running",
+      "wod",
+      "schedule",
+      "todo",
+      "principles",
+      "go-roadmap",
+      "productivity",
+      "stats",
+      "monthly-goals",
+      "yearly-goals",
+      "reading",
+      "scratchpad",
+      "server-build"
+    ],
+    "visible": {
+      "quote": false,
+      "personal-bar": false,
+      "running": false,
+      "wod": false,
+      "schedule": false,
+      "todo": true,
+      "principles": false,
+      "go-roadmap": false,
+      "productivity": false,
+      "stats": false,
+      "monthly-goals": false,
+      "yearly-goals": false,
+      "reading": false,
+      "scratchpad": true,
+      "server-build": false
+    }
+  }
+}
