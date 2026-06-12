@@ -560,7 +560,7 @@
         <input class="a-search" id="a-search" type="text" placeholder="Поиск тикетов…" />
         <select class="a-filter-sel" id="a-filter-report" onchange="aLoadTickets()">
           <option value="all">Все</option>
-          <option value="mine">Мои</option>
+          <option value="mine" selected>Мои</option>
           <option value="followed">Слежу</option>
         </select>
         <select class="a-filter-sel" id="a-filter-status" onchange="aLoadTickets()">
@@ -572,15 +572,17 @@
           <option value="number">По номеру</option>
         </select>
       </div>
-      <div class="a-panels">
-        <div class="a-list-panel">
-          <div class="a-ticket-list" id="a-ticket-list"></div>
-        </div>
-        <div class="a-detail-panel" id="a-detail-panel"></div>
+      <div class="a-ticket-list" id="a-ticket-list"></div>
+    </div>
+
+    <!-- Assembla: ticket detail modal -->
+    <div class="a-detail-overlay" id="a-detail-overlay" onclick="if(event.target===this)aCloseDetail()">
+      <div class="a-detail-modal">
+        <div class="a-detail-modal-inner" id="a-detail-panel"></div>
       </div>
     </div>
 
-    <!-- Settings modal -->
+    <!-- Assembla: settings modal -->
     <div class="a-modal-overlay" id="a-settings-modal" onclick="if(event.target===this)aCloseSettings()">
       <div class="a-modal-box">
         <div class="a-modal-title">⚙ Настройки Assembla</div>

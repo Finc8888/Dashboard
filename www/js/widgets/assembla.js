@@ -175,15 +175,18 @@ function _aRenderTicketList() {
   }).join('');
 }
 
-// ── Open ticket detail ────────────────────────────────────────────────────
+// ── Open ticket detail (modal) ────────────────────────────────────────────
 async function aOpenTicket(num, el) {
   document.querySelectorAll('.a-ticket-row').forEach(r => r.classList.remove('a-active'));
   if (el) el.classList.add('a-active');
 
-  const panel = document.getElementById('a-detail-panel');
-  if (!panel) return;
-  panel.style.display = 'flex';
-  panel.innerHTML = '<div class="a-loading" style="padding:24px"><span class="a-spinner"></span> Загрузка...</div>';
+  const overlay = document.getElementById('a-detail-overlay');
+  const panel   = document.getElementById('a-detail-panel');
+  if (!overlay || !panel) return;
+
+  overlay.style.display = 'flex';
+  panel.innerHTML = '<div class="a-loading" style="padding:32px"><span class="a-spinner"></span> Загрузка…</div>';
+  document.body.style.overflow = 'hidden';
 
   const cfg = _aCfg();
   try {
@@ -201,13 +204,14 @@ async function aOpenTicket(num, el) {
       .sort((a, b) => new Date(a.created_on) - new Date(b.created_on));
     _aRenderDetail(ticket, filtered);
   } catch (e) {
-    panel.innerHTML = `<div class="a-error" style="padding:16px">${escHtml(e.message)}</div>`;
+    panel.innerHTML = `<div class="a-error" style="margin:16px">${escHtml(e.message)}</div>`;
   }
 }
 
 function aCloseDetail() {
-  const panel = document.getElementById('a-detail-panel');
-  if (panel) panel.style.display = 'none';
+  const overlay = document.getElementById('a-detail-overlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
   document.querySelectorAll('.a-ticket-row').forEach(r => r.classList.remove('a-active'));
   _aS.currentTicket = null;
 }
@@ -274,8 +278,8 @@ function _aRenderDetail(t, comments) {
   const panel = document.getElementById('a-detail-panel');
   if (!panel) return;
   const cfg = _aCfg();
-  const created = t.created_on ? new Date(t.created_on).toLocaleString('ru') : '—';
   const updated = t.updated_on ? new Date(t.updated_on).toLocaleString('ru') : '—';
+  const created = t.created_on ? new Date(t.created_on).toLocaleString('ru') : '—';
 
   const commentsHtml = comments.length ? comments.map(c => {
     const changes = _aParseChanges(c.ticket_changes);
@@ -292,27 +296,42 @@ function _aRenderDetail(t, comments) {
   }).join('') : '<div class="a-empty" style="font-size:12px;padding:8px 0">Комментариев нет</div>';
 
   panel.innerHTML = `
-    <div class="a-detail-header">
+    <div class="a-detail-topbar">
       <div class="a-detail-num">#${t.number} ${_aRenderStatusSelect(t.status)}</div>
       <div class="a-detail-actions">
-        <a class="a-btn-sec" href="https://app.assembla.com/spaces/${cfg.spaceId}/tickets/${t.number}" target="_blank" rel="noopener">↗</a>
-        <button class="a-btn-sec" onclick="aCloseDetail()">✕</button>
+        <a class="a-btn-sec" href="http://localhost:3131" target="_blank" rel="noopener" title="Открыть Assembla Viewer">⧉ Viewer</a>
+        <a class="a-btn-sec" href="https://app.assembla.com/spaces/${cfg.spaceId}/tickets/${t.number}" target="_blank" rel="noopener" title="Открыть тикет в Assembla">↗</a>
+        <button class="a-btn-sec" onclick="aCloseDetail()" title="Закрыть (Esc)">✕</button>
       </div>
     </div>
-    <div class="a-detail-title">${escHtml(t.summary || '')}</div>
-    <div class="a-detail-meta">
-      <span>${_aPriorityLabel(t.priority)} Приоритет ${t.priority || '?'}</span>
-      <span>👤 ${escHtml(_aMemberName(t.assigned_to_id))}</span>
-      <span>✍ ${escHtml(_aMemberName(t.reporter_id))}</span>
-      ${t.milestone_name ? `<span>🏁 ${escHtml(t.milestone_name)}</span>` : ''}
-      <span>🕐 ${updated}</span>
-    </div>
-    ${t.description ? `<div class="a-detail-desc">${escHtml(t.description)}</div>` : ''}
-    <div class="a-section-title">Комментарии (${comments.length})</div>
-    <div class="a-comments-list">${commentsHtml}</div>
-    <div class="a-comment-form">
-      <textarea class="a-cmt-input" id="a-new-comment" placeholder="Добавить комментарий…" rows="3"></textarea>
-      <button class="a-btn-primary" onclick="aSubmitComment()">Отправить</button>
+
+    <div class="a-detail-cols">
+      <!-- Left: info + description -->
+      <div class="a-detail-left">
+        <div class="a-detail-title">${escHtml(t.summary || '')}</div>
+        <div class="a-detail-meta">
+          <div class="a-meta-row"><span class="a-meta-label">Приоритет</span><span>${_aPriorityLabel(t.priority)} ${t.priority || '?'}</span></div>
+          <div class="a-meta-row"><span class="a-meta-label">Назначен</span><span>${escHtml(_aMemberName(t.assigned_to_id))}</span></div>
+          <div class="a-meta-row"><span class="a-meta-label">Автор</span><span>${escHtml(_aMemberName(t.reporter_id))}</span></div>
+          ${t.milestone_name ? `<div class="a-meta-row"><span class="a-meta-label">Milestone</span><span>${escHtml(t.milestone_name)}</span></div>` : ''}
+          <div class="a-meta-row"><span class="a-meta-label">Создан</span><span>${created}</span></div>
+          <div class="a-meta-row"><span class="a-meta-label">Обновлён</span><span>${updated}</span></div>
+        </div>
+        ${t.description ? `
+          <div class="a-section-title">Описание</div>
+          <div class="a-detail-desc">${escHtml(t.description)}</div>
+        ` : ''}
+      </div>
+
+      <!-- Right: comments -->
+      <div class="a-detail-right">
+        <div class="a-section-title">Комментарии (${comments.length})</div>
+        <div class="a-comments-list">${commentsHtml}</div>
+        <div class="a-comment-form">
+          <textarea class="a-cmt-input" id="a-new-comment" placeholder="Добавить комментарий…" rows="3"></textarea>
+          <button class="a-btn-primary" onclick="aSubmitComment()">Отправить</button>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -386,6 +405,13 @@ function _aInit() {
   const cfg = _aCfg();
   if (cfg.apiKey && cfg.spaceId) aLoadTickets();
   else renderAssembla();
+
+  // close detail modal on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('a-detail-overlay')?.style.display === 'flex') {
+      aCloseDetail();
+    }
+  });
 
   // debounced search
   const searchEl = document.getElementById('a-search');
