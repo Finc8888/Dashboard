@@ -1,6 +1,6 @@
-# CLAUDE.md — Личный репозиторий планов и заметок
+# CLAUDE.md — Personal Plans and Notes Repository
 
-Этот файл описывает структуру репозитория, контекст владельца и инструкции для Claude при работе с содержимым.
+This file describes the repository structure, owner context, and instructions for the AI assistant when working with the content.
 
 ## Communication with Me
 
@@ -14,238 +14,238 @@ After completing each task, suggest 2-3 concrete next improvements. Prioritize b
 
 ---
 
-## 👤 Контекст владельца
+## 👤 Owner Context
 
-- **Стек:** PHP / JS / SQL, подходы DDD, юнит-тесты
-- **Цель:** Постепенный переход на Golang
-- **Изучает:** Golang (переход с PHP), иностранный язык через Duolingo
-- **Читает:** Список из 10 книг (Тед Чан → Ле Гуин → Лем → Хофштадтер) — см. `reading/list.md`
-- **Активности:** Ранний старт с 7:00, Вечерний бег 19:00–20:00, Duolingo 20:00–21:00
+- **Stack:** PHP / JS / SQL, DDD approaches, unit tests
+- **Goal:** Gradual transition to Golang
+- **Learning:** Golang (transitioning from PHP), foreign language via Duolingo
+- **Reading:** List of 10 books (Ted Chiang → Le Guin → Lem → Hofstadter) — see `reading/list.md`
+- **Activities:** Early start at 7:00, Evening run 19:00–20:00, Duolingo 20:00–21:00
 
 ---
 
-## 📁 Структура репозитория
+## 📁 Repository Structure
 
 ```
 /
-├── CLAUDE.md                  # Этот файл
-├── ARCHITECTURE.md            # Полная архитектура системы (C4, сети, маршруты, localStorage)
-├── PRODUCTIVITY_PLAN.md       # Основной план продуктивности, расписание, методики
-├── README.md                  # Быстрый старт, обзор, Make-команды
+├── CLAUDE.md                  # This file
+├── ARCHITECTURE.md            # Full system architecture (C4, networks, routes, localStorage)
+├── PRODUCTIVITY_PLAN.md       # Main productivity plan, schedule, methodologies
+├── README.md                  # Quick start, overview, Make commands
 ├── docs/
-│   ├── auth-architecture.md   # Архитектура единой аутентификации
-│   └── MICROSERVICES_MIGRATION.md  # Планы миграции на микросервисы
-├── DashboardCaddyfile         # Внутренний Caddyfile для Dashboard
-├── ~/excalidraw/              # Excalidraw диаграммы архитектуры (вне репозитория)
-│   └── dashboard-ui-architecture.excalidraw.json  # Архитектура Dashboard UI
+│   ├── auth-architecture.md   # Unified authentication architecture
+│   └── MICROSERVICES_MIGRATION.md  # Microservices migration plans
+├── DashboardCaddyfile         # Internal Caddyfile for Dashboard
+├── ~/excalidraw/              # Architecture diagrams (outside repo)
+│   └── dashboard-ui-architecture.excalidraw.json  # Dashboard UI architecture
 ├── www/
 │   ├── index.html             # SPA: auth overlay + main content
-│   ├── blog-wrapper.html      # iframe-обёртка для блога (Hugo не поддерживает nav)
-│   ├── 403.html               # Страница 403 — нет прав доступа к проекту
+│   ├── blog-wrapper.html      # iframe wrapper for blog (Hugo doesn't support nav)
+│   ├── 403.html               # 403 page — no access rights to project
 │   ├── css/
-│   │   ├── core.css           # Переменные, анимации, grid, header, footer, responsive
-│   │   ├── panels.css         # Модальные окна, настройки виджетов, admin
-│   │   └── widgets/           # Стили каждого виджета (по файлу)
+│   │   ├── core.css           # Variables, animations, grid, header, footer, responsive
+│   │   ├── panels.css         # Modals, widget settings, admin
+│   │   └── widgets/           # Styles for each widget (per file)
 │   ├── img/
-│   │   └── logo.png           # Логотип Gladys (голова женщины-киборга)
+│   │   └── logo.png           # Gladys logo (cyborg woman head)
 │   └── js/
 │       ├── core/
 │       │   ├── utils.js           # uid(), escHtml(), todayStr(), showToast()
 │       │   ├── widget-manager.js  # WidgetRegistry, registerWidget(), loadWidgetConfig(), applyWidgetConfig()
-│       │   ├── projects.js        # Навигация по проектам
-│       │   ├── clock-notif.js     # Часы + уведомления
+│       │   ├── projects.js        # Project navigation
+│       │   ├── clock-notif.js     # Clock + notifications
 │       │   ├── zen-mode.js        # Zen mode, day-off
-│       │   ├── keyboard.js        # Горячие клавиши
-│       │   ├── briefing.js        # Утренний брифинг + ретроспектива
+│       │   ├── keyboard.js        # Hotkeys
+│       │   ├── briefing.js        # Morning briefing + retrospective
 │       │   └── export-import.js   # exportData(), importData()
-│       ├── widgets/               # Один виджет = один файл с registerWidget()
-│       │   └── widgets-config.json # Единый конфиг виджетов (label, zone, storageKeys, defaults)
+│       ├── widgets/               # One widget = one file with registerWidget()
+│       │   └── widgets-config.json # Unified widget config (label, zone, storageKeys, defaults)
 │       ├── data/
-│       │   ├── go-data.js         # Данные Go-уроков
-│       │   └── training-data.js   # План тренировок + рекорды
-│       ├── app.js             # Тонкий оркестратор (roundRect polyfill)
-│       ├── auth.js            # Модуль аутентификации
-│       └── word-of-day.js     # Слово дня
-├── tests/                     # Jest UI тесты Dashboard (make test)
-│   ├── Dockerfile             # Docker-контейнер для тестов
-│   ├── package.json           # Jest + jsdom зависимости
-│   └── src/                   # Тесты (core/, widgets/)
+│       │   ├── go-data.js         # Go lessons data
+│       │   └── training-data.js   # Training plan + records
+│       ├── app.js             # Thin orchestrator (roundRect polyfill)
+│       ├── auth.js            # Authentication module
+│       └── word-of-day.js     # Word of the day
+├── tests/                     # Jest UI tests for Dashboard (make test)
+│   ├── Dockerfile             # Docker container for tests
+│   ├── package.json           # Jest + jsdom dependencies
+│   └── src/                   # Tests (core/, widgets/)
 ├── plans/
-│   ├── productivity.md        # Основной план продуктивности
-│   ├── golang-learning.md     # План изучения Go
-│   └── weekly/                # Еженедельные планы
+│   ├── productivity.md        # Main productivity plan
+│   ├── golang-learning.md     # Go learning plan
+│   └── weekly/                # Weekly plans
 │       └── YYYY-WXX.md
 ├── notes/
-│   ├── golang/                # Заметки по Go (концепции, сниппеты)
-│   ├── php/                   # Заметки по PHP / текущие задачи
-│   └── ideas/                 # Идеи и творческие мысли
+│   ├── golang/                # Go notes (concepts, snippets)
+│   ├── php/                   # PHP notes / current tasks
+│   └── ideas/                 # Ideas and creative thoughts
 ├── journal/
-│   └── YYYY-MM-DD.md          # Ежедневный трекинг
+│   └── YYYY-MM-DD.md          # Daily tracking
 └── reading/
-    ├── list.md                # Список чтения с трекером прогресса + содержание сборников/трилогий
-    └── notes/                 # Заметки по книгам
+    ├── list.md                # Reading list with progress tracker + collection/trilogy contents
+    └── notes/                 # Book notes
 ```
 
 ---
 
-## 📝 Форматы файлов
+## 📝 File Formats
 
-### Ежедневный журнал (`journal/YYYY-MM-DD.md`)
+### Daily Journal (`journal/YYYY-MM-DD.md`)
 
 ```markdown
 # YYYY-MM-DD
 
-## ✅ Главная задача дня
+## ✅ Main Task of the Day
 - [ ] ...
 
-## 📗 Go сегодня
-Тема: ...
-Написал: ... строк / скриптов
+## 📗 Go Today
+Topic: ...
+Written: ... lines / scripts
 
-## 🏃 Бег
-- [ ] Выполнен
+## 🏃 Running
+- [ ] Completed
 
 ## 📱 Duolingo
-- [ ] Выполнен
+- [ ] Completed
 
-## 📖 Чтение
-Книга: ...
-До страницы: ...
+## 📖 Reading
+Book: ...
+Up to page: ...
 
-## 🧠 Уровень энергии (1–10)
+## 🧠 Energy Level (1–10)
 ...
 
-## 💬 Заметки
+## 💬 Notes
 ...
 ```
 
-### Еженедельный план (`plans/weekly/YYYY-WXX.md`)
+### Weekly Plan (`plans/weekly/YYYY-WXX.md`)
 
 ```markdown
-# Неделя XX — YYYY
+# Week XX — YYYY
 
-## 🎯 Цели недели
+## 🎯 Weekly Goals
 1. ...
 
-## 🔴 Рабочие задачи
+## 🔴 Work Tasks
 - [ ] ...
 
 ## 📗 Go
 - [ ] ...
 
-## 🔁 Ретроспектива (заполнить в пятницу)
-- Что сделано:
-- Что заблокировало:
-- Что изменить:
+## 🔁 Retrospective (fill on Friday)
+- What's done:
+- What blocked:
+- What to change:
 ```
 
 ---
 
-## 🤖 Инструкции для Claude
+## 🤖 Instructions for Claude
 
-### Общий тон и подход
-- Отвечай **на русском языке**, если не указано иное
-- Будь конкретным и практичным — без лишней воды
-- Учитывай контекст: ограниченное время (1–2 часа глубокой работы в день), переход PHP → Go
+### General Tone and Approach
+- Respond in **English** unless specified otherwise.
+- Be concrete and practical — no fluff.
+- Consider context: limited time (1–2 hours of deep work per day), PHP → Go transition.
 
-### При работе с планами
-- Не добавляй новые активности без запроса — расписание уже плотное
-- При корректировке расписания — сохраняй фиксированные слоты: бег 19–20, Duolingo 20–21, Чтение 21:15–22:30
-- Задачи формулируй конкретно: не "разобраться с Go", а "написать HTTP-хэндлер на Go с роутингом"
+### When Working with Plans
+- Do not add new activities without request — the schedule is already tight.
+- When adjusting the schedule — keep fixed slots: run 19–20, Duolingo 20–21, Reading 21:15–22:30.
+- Formulate tasks concretely: not "figure out Go", but "write an HTTP handler in Go with routing".
 
-### При работе с заметками по Go
-- Примеры кода — всегда на Go (не PHP), но можно добавить комментарий-параллель с PHP если концепция новая
-- Придерживайся идиоматичного Go: интерфейсы, composition over inheritance, явная обработка ошибок
-- DDD-паттерны переводи в Go-структуры (не тащи PHP-архитектуру напрямую)
+### When Working with Go Notes
+- Code examples — always in Go (not PHP), but can add a PHP parallel comment if the concept is new.
+- Stick to idiomatic Go: interfaces, composition over inheritance, explicit error handling.
+- Translate DDD patterns into Go structures (don't carry PHP architecture directly).
 
-### При работе с журналом
-- Помогай заполнять, анализировать паттерны, замечать прогресс
-- Если энергия несколько дней подряд ниже 5 — предложи пересмотреть нагрузку, не добавлять
+### When Working with the Journal
+- Help fill, analyze patterns, notice progress.
+- If energy is below 5 for several days in a row — suggest reviewing the load, not adding more.
 
-### При работе с аутентификацией и авторизацией
-- Auth Gateway — отдельный проект в `../Auth-Gateway/`
-- Единый docker-compose запускает всё: `make up` (core) или `make up-all` (все проекты)
-- JWT хранится в HttpOnly cookie `auth_token` — не в localStorage
-- Роли: `admin` (полный доступ + админка), `user` (только Dashboard + проекты)
-- Downstream-сервисы получают `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username` от Caddy forward_auth
-- Все downstream-проекты хранят `auth_user_id` для привязки данных к пользователю Auth Gateway
-- Gladys Jobs: справочники (Companies, Skills) — admin only; вакансии — привязаны к user_id
-- Gladys Chat: чаты привязаны через `auth_user_id`
-- При удалении пользователя: Auth Gateway делает soft delete + удаляет сессии; в Gladys Jobs вакансии остаются (ON DELETE SET NULL)
+### When Working with Authentication and Authorization
+- Auth Gateway — separate project in `../Auth-Gateway/`.
+- Unified docker-compose runs everything: `make up` (core) or `make up-all` (all projects).
+- JWT is stored in HttpOnly cookie `auth_token` — not in localStorage.
+- Roles: `admin` (full access + admin panel), `user` (only Dashboard + projects).
+- Downstream services receive `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username` from Caddy forward_auth.
+- All downstream projects store `auth_user_id` to link data to the Auth Gateway user.
+- Gladys Jobs: directories (Companies, Skills) — admin only; vacancies — linked to user_id.
+- Gladys Chat: chats linked via `auth_user_id`.
+- Upon user deletion: Auth Gateway does soft delete + deletes sessions; in Gladys Jobs vacancies remain (ON DELETE SET NULL).
 
-### При работе с чтением и reading/list.md
-- Трекер прогресса — `reading/list.md`: статус (⬜/🔄/✅), страница, журнал дат
-- Сборники и трилогии содержат вложенные списки произведений (раскрываемые в UI)
-- Связывай идеи из книг с программированием и архитектурой систем где уместно
-- Не спойлери книги, которые ещё не читались (смотри на статус в списке)
-- Список фиксированный, читается строго по порядку — не меняй очерёдность
+### When Working with Reading and reading/list.md
+- Progress tracker — `reading/list.md`: status (⬜/🔄/✅), page, date log.
+- Collections and trilogies contain nested lists of works (expandable in UI).
+- Link ideas from books with programming and system architecture where appropriate.
+- Do not spoil books that haven't been read yet (check status in list).
+- The list is fixed, read strictly in order — do not change the sequence.
 
-### При работе с целями
-- Цели привязаны к месяцу и году (не к фиксированным 30 дням)
-- Recurring-цели (например «Ранний старт с 7 утра») автоматически переносятся каждый месяц
-- Незавершённые цели автоматически переносятся в следующий период
-- Архив хранит историю целей прошлых периодов
+### When Working with Goals
+- Goals are linked to month and year (not to fixed 30 days).
+- Recurring goals (e.g., "Early start at 7 AM") are automatically carried over every month.
+- Unfinished goals are automatically carried over to the next period.
+- Archive stores goal history from past periods.
 
-### При работе с виджетами
-- **ОБЯЗАТЕЛЬНО** ознакомься с `docs/widget-guide.md` — там описаны структура, паттерны, чеклист и требования к тестам для виджетов
-- Каждая функция-мутация виджета **должна** вызывать render после сохранения данных (паттерн render-after-save)
-- При создании нового виджета — следуй чеклисту в `docs/widget-guide.md`, включая написание тестов
+### When Working with Widgets
+- **MANDATORY** read `docs/widget-guide.md` — it describes structure, patterns, checklist and test requirements for widgets.
+- Every widget mutation function **must** call render after saving data (render-after-save pattern).
+- When creating a new widget — follow the checklist in `docs/widget-guide.md`, including writing tests.
 
-### При изменении кода Dashboard (www/)
-- **ОБЯЗАТЕЛЬНО** после изменений в `www/js/app.js`, `www/index.html` или `www/css/style.css` проверь актуальность:
-  - `ARCHITECTURE.md` — секция 6 (компоненты Dashboard, localStorage схема)
-  - `CLAUDE.md` — структура репозитория (если добавлены/удалены файлы)
-  - `PRODUCTIVITY_PLAN.md` — если изменились цели, расписание или метрики
-  - `reading/list.md` — если изменился список чтения или его структура
-  - `README.md` — если изменилась структура файлов проекта
-- При добавлении нового ключа в localStorage — обновить таблицу в ARCHITECTURE.md секция 6.4
-- При добавлении/удалении виджета — обновить mindmap в ARCHITECTURE.md секция 6.3
-- Убедиться что export/import (`exportData`/`importData`) корректно обрабатывает все ключи localStorage
+### When Changing Dashboard Code (www/)
+- **MANDATORY** after changes in `www/js/app.js`, `www/index.html` or `www/css/style.css`, check the relevance of:
+  - `ARCHITECTURE.md` — section 6 (Dashboard components, localStorage schema).
+  - `CLAUDE.md` — repository structure (if files are added/removed).
+  - `PRODUCTIVITY_PLAN.md` — if goals, schedule or metrics change.
+  - `reading/list.md` — if the reading list or its structure changes.
+  - `README.md` — if the project file structure changes.
+- When adding a new key to localStorage — update the table in ARCHITECTURE.md section 6.4.
+- When adding/removing a widget — update the mindmap in ARCHITECTURE.md section 6.3.
+- Ensure that export/import (`exportData`/`importData`) correctly handles all localStorage keys.
 
-### При изменении подходов к созданию виджетов или проектов
-- Если изменился порядок шагов, появился новый подводный камень или устарел старый подход:
-  - `docs/widget-guide.md` — обновить если изменилась структура виджетов: `widgets-config.json`, `registerWidget`, `reorderWidgets`, `applyWidgetVisibility`, паттерн localStorage, export/import
-  - `docs/project-registration-guide.md` — обновить если изменился `PROJECTS`, `PROJECT_PERMISSIONS`, схема Caddyfile для проектов, или паттерн разрешений Auth Gateway
-  - `docs/new-project-guide.md` — обновить если изменился типовой стек нового проекта (Go-структура, MobX-паттерны, схема DB, Auth Gateway интеграция, Caddy-маршруты)
-- При добавлении нового проекта в `PROJECTS` — убедиться что он задокументирован в `ARCHITECTURE.md`
+### When Changing Approaches to Creating Widgets or Projects
+- If the order of steps changed, a new pitfall appeared, or an old approach became obsolete:
+  - `docs/widget-guide.md` — update if widget structure changes: `widgets-config.json`, `registerWidget`, `reorderWidgets`, `applyWidgetVisibility`, localStorage pattern, export/import.
+  - `docs/project-registration-guide.md` — update if `PROJECTS`, `PROJECT_PERMISSIONS`, Caddyfile scheme for projects, or Auth Gateway permission pattern changes.
+  - `docs/new-project-guide.md` — update if the typical stack for a new project changes (Go structure, MobX patterns, DB scheme, Auth Gateway integration, Caddy routes).
+- When adding a new project to `PROJECTS` — ensure it is documented in `ARCHITECTURE.md`.
 
 ---
 
-## 🌐 Экосистема проектов Gladys
+## 🌐 Gladys Project Ecosystem
 
-Все проекты находятся в `~/code/projects/` и объединены под брендом **Gladys**. Gladys Dashboard — центральный хаб, остальные проекты доступны через него.
+All projects are located in `~/code/projects/` and are united under the **Gladys** brand. Gladys Dashboard is the central hub, and other projects are accessible through it.
 
-### Брендинг
-- **Логотип:** `www/img/logo.png` — голова женщины-киборга (общий для всех проектов)
-- Логотип хранится **только** в основном проекте Dashboard, подпроекты ссылаются на `/img/logo.png` (абсолютный путь через Caddy gateway)
-- Логотип в подпроектах — кликабельная ссылка на `/` (возврат в Dashboard), заменяет кнопку "← Dashboard"
-- **Шрифт заголовков:** [Orbitron](https://fonts.google.com/specimen/Orbitron) (Google Fonts), gradient cyan→purple
-- **Цвета бренда:** cyan `#06b6d4`, purple `#a78bfa`, blue `#3b82f6`
+### Branding
+- **Logo:** `www/img/logo.png` — cyborg woman head (common for all projects).
+- Logo is stored **only** in the main Dashboard project; sub-projects link to `/img/logo.png` (absolute path via Caddy gateway).
+- Logo in sub-projects is a clickable link to `/` (return to Dashboard), replacing the "← Dashboard" button.
+- **Heading Font:** [Orbitron](https://fonts.google.com/specimen/Orbitron) (Google Fonts), gradient cyan→purple.
+- **Brand Colors:** cyan `#06b6d4`, purple `#a78bfa`, blue `#3b82f6`.
 
-### Проекты и локальные пути
+### Projects and Local Paths
 
-| Проект | UI-название | Девиз | Локальный путь | Стек |
+| Project | UI Name | Motto | Local Path | Stack |
 |--------|------------|-------|----------------|------|
-| **Dashboard** | Gladys Dashboard | Всё нужное рядом | `~/code/projects/Productivity/` | Vanilla JS, Caddy |
-| **Auth Gateway** | Админ-панель | Ключи от всех дверей | `~/code/projects/Auth-Gateway/` | Go, JWT, Caddy forward_auth |
-| **Chat** | Gladys Chat | Слова под замком | `~/code/projects/Gladys-Chat/` | Go, React (MobX), WebSocket, E2EE |
-| **Jobs** | Gladys Jobs | Каждый шаг на счету | `~/code/projects/job-statistics-platform/` | Go API, React (MobX), MySQL |
-| **Blog** | Gladys Blog | Мысли обретают форму | `~/code/projects/Gladys-Blog/` | Hugo, Nginx, Docker |
-| **Blog Admin** | Gladys Blog Admin | За кулисами слов | `~/code/projects/Gladys-Blog/blog-admin/` | Vanilla JS |
-| **Sketchbook** | Gladys Sketchbook | Пространство для вдохновения | `~/code/projects/sketchbook/` | React (MobX), Go API |
+| **Dashboard** | Gladys Dashboard | Everything needed nearby | `~/code/projects/Productivity/` | Vanilla JS, Caddy |
+| **Auth Gateway** | Admin Panel | Keys to all doors | `~/code/projects/Auth-Gateway/` | Go, JWT, Caddy forward_auth |
+| **Chat** | Gladys Chat | Words under lock | `~/code/projects/Gladys-Chat/` | Go, React (MobX), WebSocket, E2EE |
+| **Jobs** | Gladys Jobs | Every step counts | `~/code/projects/job-statistics-platform/` | Go API, React (MobX), MySQL |
+| **Blog** | Gladys Blog | Thoughts take shape | `~/code/projects/Gladys-Blog/` | Hugo, Nginx, Docker |
+| **Blog Admin** | Gladys Blog Admin | Behind the scenes of words | `~/code/projects/Gladys-Blog/blog-admin/` | Vanilla JS |
+| **Sketchbook** | Gladys Sketchbook | Space for inspiration | `~/code/projects/sketchbook/` | React (MobX), Go API |
 
-### Связи между проектами
-- Все проекты проксируются через **Caddy** (конфиг в Productivity)
-- Аутентификация — через **Auth Gateway** (`forward_auth`)
-- Каждый downstream-проект получает заголовки `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username`
-- При работе с конкретным проектом — переходи в его директорию
-- Логотип и шрифт Orbitron подключены во всех проектах
+### Project Connections
+- All projects are proxied through **Caddy** (config in Productivity).
+- Authentication is handled by **Auth Gateway** (`forward_auth`).
+- Each downstream project receives headers `X-Auth-User` / `X-Auth-Role` / `X-Auth-Username`.
+- When working with a specific project — navigate to its directory.
+- Logo and Orbitron font are connected in all projects.
 
 ---
 
-## 🚫 Чего не делать
+## 🚫 What NOT to do
 
-- Не предлагать добавить YouTube / новости в расписание
-- Не увеличивать количество задач в день — лучше меньше, но выполнено
-- Не переусложнять структуру заметок — простота важнее полноты
-- Не переключаться на английский без явной просьбы
+- Do not suggest adding YouTube / news to the schedule.
+- Do not increase the number of tasks per day — better fewer, but completed.
+- Do not overcomplicate the notes structure — simplicity is more important than completeness.
+- Do not switch to English without an explicit request.
