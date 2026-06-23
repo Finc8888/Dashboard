@@ -283,7 +283,7 @@
   },
   {
     "id": "ai-assistant",
-    "label": "AI Ассистент (Gemma)",
+    "label": "AI Ассистент (OpenRouter)",
     "zone": "full-width",
     "storageKeys": ["prod_ai_history_v1"],
     "defaults": {}

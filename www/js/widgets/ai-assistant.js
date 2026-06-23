@@ -1,9 +1,9 @@
 'use strict';
 
-// ── AI Assistant (Ollama / Gemma) ──────────────────────────────────────────
+// ── AI Assistant (OpenRouter) ─────────────────────────────────────────────
 const AI_HISTORY_KEY = 'prod_ai_history_v1';
-const AI_OLLAMA_URL = localStorage.getItem('prod_ai_ollama_url') || 'http://localhost:11434';
-const AI_MODEL = localStorage.getItem('prod_ai_model') || 'gemma4:e4b';
+const AI_BASE_URL = '/api/ai';
+const AI_MODEL = localStorage.getItem('prod_ai_model') || 'xiaomi/mimo-v2.5-pro';
 const AI_CONTEXT_KEY = 'prod_ai_context_v1';
 
 function aiLoadHistory() { return loadJSON(AI_HISTORY_KEY, []); }
@@ -229,27 +229,24 @@ async function aiSend() {
       ...recentHistory
     ];
 
-    const resp = await fetch(AI_OLLAMA_URL + '/api/chat', {
+    const resp = await fetch(AI_BASE_URL + '/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: AI_MODEL,
         messages: apiMessages,
         stream: false,
-        options: {
-          temperature: 0.7,
-          num_ctx: 16384,
-        },
+        temperature: 0.7,
       }),
     });
 
     if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`Ollama ответил ${resp.status}: ${errText}`);
+      console.error('OpenRouter error', resp.status, await resp.text());
+      throw new Error(`OpenRouter ответил ${resp.status}`);
     }
 
     const data = await resp.json();
-    const reply = data.message?.content || 'Пустой ответ от модели.';
+    const reply = data.choices?.[0]?.message?.content || 'Пустой ответ от модели.';
 
     history.push({ role: 'assistant', content: reply });
     aiSaveHistory(history);
@@ -343,18 +340,18 @@ async function aiCheckConnection() {
   const status = document.getElementById('ai-status');
   if (!status) return;
   try {
-    const resp = await fetch(AI_OLLAMA_URL + '/api/tags', { signal: AbortSignal.timeout(3000) });
+    const resp = await fetch(AI_BASE_URL + '/api/v1/models', { signal: AbortSignal.timeout(3000) });
     if (resp.ok) {
       const data = await resp.json();
-      const hasModel = data.models?.some(m => m.name.startsWith(AI_MODEL.split(':')[0]));
-      status.textContent = hasModel ? `Модель ${AI_MODEL} подключена` : 'Модель не найдена';
+      const hasModel = data.data?.some(m => m.id === AI_MODEL);
+      status.textContent = hasModel ? `Модель ${AI_MODEL} подключена` : 'Модель не найдена в OpenRouter';
       status.className = 'ai-status ' + (hasModel ? 'connected' : 'error');
     } else {
-      status.textContent = 'Ollama недоступна';
+      status.textContent = 'OpenRouter недоступен';
       status.className = 'ai-status error';
     }
   } catch {
-    status.textContent = 'Ollama недоступна';
+    status.textContent = 'OpenRouter недоступен';
     status.className = 'ai-status error';
   }
 }

@@ -6,6 +6,19 @@
     @widgets_config path /js/widgets/widgets-config.json
     header @widgets_config Cache-Control "no-cache, must-revalidate"
 
+    # -- OpenRouter AI proxy (requires auth, API key from container env) --
+    handle /api/ai/* {
+        forward_auth auth-gateway:8080 {
+            uri /api/auth/verify
+        }
+        uri strip_prefix /api/ai
+        reverse_proxy https://openrouter.ai {
+            header_up Host openrouter.ai
+            header_up Authorization "Bearer {env.OPENROUTER_API_KEY}"
+            header_up Content-Type "application/json"
+        }
+    }
+
     handle /data/training_schedule.csv {
         root * /srv/5run
         rewrite * /training_schedule.csv

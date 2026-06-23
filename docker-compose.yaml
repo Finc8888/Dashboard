@@ -24,6 +24,8 @@ services:
     image: caddy:2-alpine
     container_name: dashboard
     restart: unless-stopped
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     volumes:
       - ./www:/srv/www:ro
       - ./DashboardCaddyfile:/etc/caddy/Caddyfile:ro
